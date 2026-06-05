@@ -7,6 +7,7 @@ import {
   LogOut,
   Sparkles,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import useDialogState from '@/hooks/use-dialog-state'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -28,6 +29,7 @@ import {
 import { SignOutDialog } from '@/components/sign-out-dialog'
 
 export function NavUser() {
+  const { t } = useTranslation()
   const { isMobile } = useSidebar()
   const user = useCurrentUser()
   const [open, setOpen] = useDialogState()
@@ -79,7 +81,7 @@ export function NavUser() {
               <DropdownMenuGroup>
                 <DropdownMenuItem>
                   <Sparkles />
-                  Upgrade to Pro
+                  {t('profile.Upgrade to Pro')}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
@@ -87,19 +89,19 @@ export function NavUser() {
                 <DropdownMenuItem asChild>
                   <Link to='/settings/account'>
                     <BadgeCheck />
-                    Account
+                    {t('profile.Account')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to='/settings'>
                     <CreditCard />
-                    Billing
+                    {t('profile.Billing')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to='/settings/notifications'>
                     <Bell />
-                    Notifications
+                    {t('profile.Notifications')}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
@@ -109,7 +111,7 @@ export function NavUser() {
                 onClick={() => setOpen(true)}
               >
                 <LogOut />
-                Sign out
+                {t('profile.Sign out')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

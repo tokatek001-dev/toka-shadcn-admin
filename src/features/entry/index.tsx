@@ -1,6 +1,7 @@
 import { getRouteApi } from '@tanstack/react-router'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
+import { LanguageSwitch } from '@/components/layout/language-switch'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
@@ -14,12 +15,14 @@ export function Entry() {
   const search = route.useSearch()
   const navigate = route.useNavigate()
 
-  const activeTab: EntryTab = search.tab === 'full_tests' ? 'full_tests' : 'part_tests'
+  const activeTab: EntryTab =
+    search.tab === 'full_tests' ? 'full_tests' : 'part_tests'
 
   return (
     <EntryProvider activeTab={activeTab} search={search} navigate={navigate}>
       <Header fixed>
         <Search className='me-auto' />
+        <LanguageSwitch />
         <ThemeSwitch />
         <ConfigDrawer />
         <ProfileDropdown />

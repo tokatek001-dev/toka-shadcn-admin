@@ -95,18 +95,20 @@ if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <FontProvider>
-            <DirectionProvider>
-              <RouterProvider router={router} />
-              {import.meta.env.DEV && (
-                <Agentation endpoint='http://localhost:4747' />
-              )}
-            </DirectionProvider>
-          </FontProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
+      <I18nProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <FontProvider>
+              <DirectionProvider>
+                <RouterProvider router={router} />
+                {import.meta.env.DEV && (
+                  <Agentation endpoint='http://localhost:4747' />
+                )}
+              </DirectionProvider>
+            </FontProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </I18nProvider>
     </StrictMode>
   )
 }

@@ -25,7 +25,11 @@ export const fullTestTypeValues = ['FTL', 'FTR', 'FT'] as const
 
 export const parentTestTypeValues = ['SKILL_TEST', 'FULL_TEST'] as const
 
-export const partDocumentStatusValues = ['PUBLISHED', 'EDITING', 'DRAFT'] as const
+export const partDocumentStatusValues = [
+  'PUBLISHED',
+  'EDITING',
+  'DRAFT',
+] as const
 
 export const fullDocumentStatusValues = [
   'EDITING',
@@ -95,7 +99,10 @@ export const fullTestTypeOptions = fullTestTypeValues.map((value) => ({
 }))
 
 export const parentTestTypeOptions = parentTestTypeValues.map((value) => ({
-  label: value.replace('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()),
+  label: value
+    .replace('_', ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase()),
   value,
 }))
 

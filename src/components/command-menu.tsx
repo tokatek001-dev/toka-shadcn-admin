@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { ArrowRight, ChevronRight, Laptop, Moon, Sun } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useSearch } from '@/context/search-provider'
 import { useTheme } from '@/context/theme-provider'
 import {
@@ -19,6 +20,7 @@ export function CommandMenu() {
   const navigate = useNavigate()
   const { setTheme } = useTheme()
   const { open, setOpen } = useSearch()
+  const { t } = useTranslation()
 
   const runCommand = React.useCallback(
     (command: () => unknown) => {
@@ -30,12 +32,15 @@ export function CommandMenu() {
 
   return (
     <CommandDialog modal open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder='Type a command or search...' />
+      <CommandInput placeholder={t('header.searchPlaceholder')} />
       <CommandList>
         <ScrollArea type='hover' className='h-72 pe-1'>
-          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandEmpty>{t('header.noResults')}</CommandEmpty>
           {sidebarData.navGroups.map((group) => (
-            <CommandGroup key={group.title} heading={group.title}>
+            <CommandGroup
+              key={group.title}
+              heading={t(`nav.groups.${group.title}`, group.title)}
+            >
               {group.items.map((navItem, i) => {
                 if (navItem.url)
                   return (
@@ -49,7 +54,7 @@ export function CommandMenu() {
                       <div className='flex size-4 items-center justify-center'>
                         <ArrowRight className='size-2 text-muted-foreground/80' />
                       </div>
-                      {navItem.title}
+                      {t(`nav.items.${navItem.title}`, navItem.title)}
                     </CommandItem>
                   )
 
@@ -64,7 +69,9 @@ export function CommandMenu() {
                     <div className='flex size-4 items-center justify-center'>
                       <ArrowRight className='size-2 text-muted-foreground/80' />
                     </div>
-                    {navItem.title} <ChevronRight /> {subItem.title}
+                    {t(`nav.items.${navItem.title}`, navItem.title)}{' '}
+                    <ChevronRight />{' '}
+                    {t(`nav.items.${subItem.title}`, subItem.title)}
                   </CommandItem>
                 ))
               })}

@@ -1,0 +1,64 @@
+{
+  "nav": {
+    "groups": {
+      "General": "General",
+      "Pages": "Pages",
+      "Other": "Other"
+    },
+    "items": {
+      "Dashboard": "Dashboard",
+      "Tasks": "Tasks",
+      "Apps": "Apps",
+      "Chats": "Chats",
+      "Users": "Users",
+      "Auth": "Auth",
+      "Sign In": "Sign In",
+      "Forgot Password": "Forgot Password",
+      "Errors": "Errors",
+      "Unauthorized": "Unauthorized",
+      "Forbidden": "Forbidden",
+      "Not Found": "Not Found",
+      "Internal Server Error": "Internal Server Error",
+      "Maintenance Error": "Maintenance Error",
+      "Entry": "Entry",
+      "Settings": "Settings",
+      "Profile": "Profile",
+      "Account": "Account",
+      "Appearance": "Appearance",
+      "Notifications": "Notifications",
+      "Display": "Display",
+      "Help Center": "Help Center"
+    }
+  },
+  "header": {
+    "searchPlaceholder": "Type a command or search...",
+    "noResults": "No results found.",
+    "search": "Search"
+  },
+  "profile": {
+    "Profile": "Profile",
+    "Billing": "Billing",
+    "Settings": "Settings",
+    "New Team": "New Team",
+    "Sign out": "Sign out",
+    "Upgrade to Pro": "Upgrade to Pro",
+    "Account": "Account",
+    "Notifications": "Notifications"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your account settings and set e-mail preferences.",
+    "nav": {
+      "Profile": "Profile",
+      "Account": "Account",
+      "Appearance": "Appearance",
+      "Notifications": "Notifications",
+      "Display": "Display"
+    }
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "vi": "Tiếng Việt"
+  }
+}

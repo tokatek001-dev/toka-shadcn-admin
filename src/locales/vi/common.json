@@ -1,0 +1,64 @@
+{
+  "nav": {
+    "groups": {
+      "General": "Chung",
+      "Pages": "Trang",
+      "Other": "Khác"
+    },
+    "items": {
+      "Dashboard": "Bảng điều khiển",
+      "Tasks": "Công việc",
+      "Apps": "Ứng dụng",
+      "Chats": "Trò chuyện",
+      "Users": "Người dùng",
+      "Auth": "Xác thực",
+      "Sign In": "Đăng nhập",
+      "Forgot Password": "Quên mật khẩu",
+      "Errors": "Lỗi",
+      "Unauthorized": "Chưa xác thực",
+      "Forbidden": "Bị cấm",
+      "Not Found": "Không tìm thấy",
+      "Internal Server Error": "Lỗi máy chủ nội bộ",
+      "Maintenance Error": "Lỗi bảo trì",
+      "Entry": "Mục nhập",
+      "Settings": "Cài đặt",
+      "Profile": "Hồ sơ",
+      "Account": "Tài khoản",
+      "Appearance": "Giao diện",
+      "Notifications": "Thông báo",
+      "Display": "Hiển thị",
+      "Help Center": "Trung tâm trợ giúp"
+    }
+  },
+  "header": {
+    "searchPlaceholder": "Nhập lệnh hoặc tìm kiếm...",
+    "noResults": "Không tìm thấy kết quả.",
+    "search": "Tìm kiếm"
+  },
+  "profile": {
+    "Profile": "Hồ sơ",
+    "Billing": "Thanh toán",
+    "Settings": "Cài đặt",
+    "New Team": "Nhóm mới",
+    "Sign out": "Đăng xuất",
+    "Upgrade to Pro": "Nâng cấp lên Pro",
+    "Account": "Tài khoản",
+    "Notifications": "Thông báo"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "description": "Quản lý cài đặt tài khoản và thiết lập tùy chọn email của bạn.",
+    "nav": {
+      "Profile": "Hồ sơ",
+      "Account": "Tài khoản",
+      "Appearance": "Giao diện",
+      "Notifications": "Thông báo",
+      "Display": "Hiển thị"
+    }
+  },
+  "language": {
+    "label": "Ngôn ngữ",
+    "en": "English",
+    "vi": "Tiếng Việt"
+  }
+}

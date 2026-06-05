@@ -1,6 +1,7 @@
 import { getRouteApi } from '@tanstack/react-router'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { Header } from '@/components/layout/header'
+import { LanguageSwitch } from '@/components/layout/language-switch'
 import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
@@ -21,6 +22,7 @@ export function Users() {
     <UsersProvider>
       <Header fixed>
         <Search className='me-auto' />
+        <LanguageSwitch />
         <ThemeSwitch />
         <ConfigDrawer />
         <ProfileDropdown />

@@ -11,7 +11,9 @@ export const entryColumnsPartTests: ColumnDef<PartTest>[] = [
       <DataTableColumnHeader column={column} title='Name' />
     ),
     cell: ({ row }) => (
-      <LongText className='max-w-56 ps-1'>{row.getValue('name') ?? '–'}</LongText>
+      <LongText className='max-w-56 ps-1'>
+        {row.getValue('name') ?? '–'}
+      </LongText>
     ),
     enableSorting: false,
     enableHiding: false,
@@ -23,7 +25,9 @@ export const entryColumnsPartTests: ColumnDef<PartTest>[] = [
     ),
     cell: ({ row }) => {
       const part = row.getValue<string | null>('part')
-      return <div className='text-nowrap'>{part ? part.replace('_', ' ') : '–'}</div>
+      return (
+        <div className='text-nowrap'>{part ? part.replace('_', ' ') : '–'}</div>
+      )
     },
     enableSorting: false,
   },
@@ -45,7 +49,9 @@ export const entryColumnsPartTests: ColumnDef<PartTest>[] = [
     cell: ({ row }) => {
       const level = row.getValue<string | null>('level')
       return (
-        <div className='text-nowrap'>{level ? level.replace('_', ' ') : '–'}</div>
+        <div className='text-nowrap'>
+          {level ? level.replace('_', ' ') : '–'}
+        </div>
       )
     },
     enableSorting: false,
@@ -76,7 +82,9 @@ export const entryColumnsPartTests: ColumnDef<PartTest>[] = [
       <DataTableColumnHeader column={column} title='Status' />
     ),
     cell: ({ row }) => (
-      <div className='text-nowrap'>{row.getValue('document_status') ?? '–'}</div>
+      <div className='text-nowrap'>
+        {row.getValue('document_status') ?? '–'}
+      </div>
     ),
     enableSorting: false,
   },

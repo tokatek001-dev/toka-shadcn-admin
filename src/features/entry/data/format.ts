@@ -9,7 +9,9 @@ import { format } from 'date-fns'
  * - 0      -> "00:00"
  * - null/undefined -> "–"
  */
-export function formatDuration(milliseconds: number | null | undefined): string {
+export function formatDuration(
+  milliseconds: number | null | undefined
+): string {
   if (milliseconds == null || Number.isNaN(milliseconds)) return '–'
   const total = Math.max(0, Math.floor(milliseconds / 1000))
   const minutes = Math.floor(total / 60)
