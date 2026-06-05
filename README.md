@@ -4,8 +4,6 @@ Admin Dashboard UI crafted with Shadcn and Vite. Built with responsiveness and a
 
 ![alt text](public/images/shadcn-admin.png)
 
-[![Sponsored by Clerk](https://img.shields.io/badge/Sponsored%20by-Clerk-5b6ee1?logo=clerk)](https://go.clerk.com/GttUAaK)
-
 I've been creating dashboard UIs at work and for my personal projects. I always wanted to make a reusable collection of dashboard UI for future projects; and here it is now. While I've created a few custom components, some of the code is directly adapted from ShadcnUI examples.
 
 > This is not a starter project (template) though. I'll probably make one in the future.
@@ -72,7 +70,43 @@ If you want to update components using the Shadcn CLI (e.g., `npx shadcn@latest 
 
 **Icons:** [Lucide Icons](https://lucide.dev/icons/), [Tabler Icons](https://tabler.io/icons) (Brand icons only)
 
-**Auth (partial):** [Clerk](https://go.clerk.com/GttUAaK)
+**Auth:** [Supabase](https://supabase.com/) (email+password, Google OAuth, password recovery)
+
+## Authentication setup (Supabase)
+
+This app uses Supabase for auth. Access is restricted to `@tokatek.com` accounts (invite-only admin app).
+
+### 1. Env
+
+Copy `.env.example` → `.env.local` and fill from Supabase Dashboard → Settings → API:
+
+```
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
+
+Never expose the `service_role` key to the client — there is no `VITE_*` variant of it for a reason.
+
+### 2. Supabase Dashboard — one-time
+
+- **Auth → Providers → Email**: Enabled. "Confirm email" = ON.
+- **Auth → Providers → Google**: Enabled. Paste Google OAuth client id/secret from the Google Cloud Console step below.
+- **Auth → URL Configuration**:
+  - Site URL: `http://localhost:5173` (dev) or your production URL
+  - Redirect URLs: `${SITE}/oauth/callback`, `${SITE}/reset-password`
+- **Auth → Email Templates → Reset Password**: confirm the link points to `{{ .SiteURL }}/reset-password`.
+
+### 3. Google Cloud Console — one-time
+
+- OAuth consent screen: **Internal** under the tokatek Workspace (this is the real domain restriction — Google refuses non-workspace accounts before they reach the app).
+- Authorized redirect URIs: `${SUPABASE_URL}/auth/v1/callback`.
+
+### 4. Creating users (invite-only)
+
+Sign-up is disabled. To onboard a user:
+
+1. Supabase Dashboard → Authentication → Users → **Add user** → tick "Auto Confirm User".
+2. Send the user to `/forgot-password` to set their own password via the recovery email.
 
 ## Run Locally
 
@@ -105,10 +139,6 @@ Start the server
 If you find this project helpful or use this in your own work, consider [sponsoring me](https://github.com/sponsors/satnaing) to support development and maintenance. You can [buy me a coffee](https://buymeacoffee.com/satnaing) as well. Don’t worry, every penny helps. Thank you! 🙏
 
 For questions or sponsorship inquiries, feel free to reach out at [satnaingdev@gmail.com](mailto:satnaingdev@gmail.com).
-
-### Current Sponsor
-
-- [Clerk](https://go.clerk.com/GttUAaK) - authentication and user management for the modern web
 
 ## Author
 
