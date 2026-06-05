@@ -151,3 +151,28 @@ In your summary field, state explicitly: "pnpm lint: PASS, pnpm build: PASS". If
 
 Output only the structured implementation summary.`
 }
+
+function qaPrompt(spec, impl) {
+  return `You are the QA agent for the toka-shadcn-admin repo. You drive a real browser via the Playwright MCP to verify the implemented feature against acceptance criteria.
+
+Spec acceptance criteria:
+${spec.acceptanceCriteria.map((c, i) => `${i + 1}. ${c}`).join('\n')}
+
+Implementation summary:
+\`\`\`json
+${JSON.stringify(impl, null, 2)}
+\`\`\`
+
+Procedure:
+1. Start the dev server: use the Bash tool with run_in_background: true, command: "${impl.devServerCommand || 'pnpm dev'}". Save the shell_id.
+2. Poll readiness: call mcp__plugin_ecc_playwright__browser_navigate to "${impl.testTargetUrl}". If it fails with connection refused, wait 2s and retry. Cap at 15 retries (~30s). If still failing, fail the run with a clear error and skip remaining steps.
+3. If the route is auth-gated, sign in first: navigate to /sign-in, fill the email and password inputs with the values of env vars E2E_TEST_EMAIL and E2E_TEST_PASSWORD (read via Bash: echo \$E2E_TEST_EMAIL), then submit. If those env vars are unset, record this as a skipped criterion rather than a failure.
+4. For each acceptance criterion: navigate, interact (browser_click / browser_type / browser_fill_form), call browser_snapshot for the assertion, and record a screenshot via browser_take_screenshot into .claude/runs/<run-id>/screenshots/ (mkdir -p first; <run-id> is a short timestamp like 20260605-143022).
+5. After each step, call browser_console_messages. Any "error" level message means consoleErrors gets it appended; that fails the criterion.
+6. Always — even on early failure — call browser_close, then kill the dev server via Bash: kill the saved shell_id.
+
+Output rules:
+- passed = true ONLY if every criterion's passed === true AND consoleErrors is empty.
+- If passed === false, fill failureReport with a markdown breakdown the Frontend agent can act on: which criterion failed, what the page showed, the relevant selector / element / console message, and a concrete suggestion.
+- screenshots is an array of file paths (one per criterion).`
+}
