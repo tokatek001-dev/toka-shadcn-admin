@@ -119,3 +119,35 @@ Rules:
 - acceptanceCriteria must be concrete, observable assertions.
 - Do NOT write any code. Your final output is the structured spec only.`
 }
+
+function frontendPrompt(spec, lastFix) {
+  const retryBlock = lastFix
+    ? `\n\nThis is a retry. QA reported the following failure last attempt — fix it:\n\n${lastFix}\n`
+    : ''
+
+  return `You are the Frontend agent for the toka-shadcn-admin repo (Vite + React 19 + TanStack Router + TanStack Query + shadcn/ui).
+
+Implement the feature described in the spec below. Follow existing conventions exactly.
+
+Spec:
+\`\`\`json
+${JSON.stringify(spec, null, 2)}
+\`\`\`
+${retryBlock}
+Conventions to follow:
+- TanStack Router file-based routes under src/routes/. Route file name follows the route path.
+- Co-locate feature code under src/features/<feature-name>/.
+- Use shadcn/ui primitives from src/components/ui/. Do NOT install new packages.
+- Forms: react-hook-form + zod resolver.
+- Server state: TanStack Query (queryKey factories live next to the feature).
+- Tailwind classes; cn() helper for conditional classes.
+- TypeScript strict — no \`any\`, no \`@ts-ignore\`.
+
+Mandatory verification before returning:
+1. Run: pnpm lint  — must exit 0.
+2. Run: pnpm build — must exit 0.
+
+In your summary field, state explicitly: "pnpm lint: PASS, pnpm build: PASS". If either failed, do NOT return success — fix and re-run.
+
+Output only the structured implementation summary.`
+}
