@@ -34,6 +34,9 @@ function applySession(
 
 export const useAuthStore = create<AuthState>()((set, get) => {
   // Hydrate from existing session, then subscribe to changes.
+  // Race note: onAuthStateChange also fires INITIAL_SESSION shortly after
+  // subscription. Last-write-wins via applySession; supabase-js coalesces
+  // these so the resolved state is consistent.
   void supabase.auth.getSession().then(({ data }) => {
     applySession(set, data.session)
   })
@@ -67,6 +70,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
     async signOut() {
       await supabase.auth.signOut()
+      // Apply synchronously so callers awaiting signOut see status flip
+      // immediately. The SIGNED_OUT listener will re-apply (idempotent).
       applySession(set, null)
     },
 

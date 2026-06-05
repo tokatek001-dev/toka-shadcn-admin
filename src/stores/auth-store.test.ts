@@ -97,9 +97,9 @@ describe('useAuthStore', () => {
     })
   })
 
-  it('starts in loading status, then resolves to unauthenticated', () => {
-    // After beforeAll the store is already hydrated. Verify it landed on
-    // unauthenticated given the default null-session mock.
+  it('is unauthenticated after initial hydration with null session', () => {
+    // beforeAll already proved the loading->unauthenticated transition by
+    // waiting on it. This test asserts the resolved state.
     expect(useAuthStore.getState().status).toBe('unauthenticated')
   })
 
