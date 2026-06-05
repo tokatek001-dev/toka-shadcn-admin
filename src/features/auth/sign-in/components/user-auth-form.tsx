@@ -58,13 +58,6 @@ export function UserAuthForm({
       return
     }
 
-    const { isAllowed, signOut } = useAuthStore.getState()
-    if (!isAllowed()) {
-      await signOut()
-      toast.error('Tài khoản không có quyền truy cập')
-      return
-    }
-
     navigate({ to: redirectTo || '/', replace: true })
   }
 
@@ -96,7 +89,7 @@ export function UserAuthForm({
               <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input
-                  placeholder='name@tokatek.com'
+                  placeholder='name@example.com'
                   autoComplete='email'
                   {...field}
                 />

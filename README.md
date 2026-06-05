@@ -74,7 +74,7 @@ If you want to update components using the Shadcn CLI (e.g., `npx shadcn@latest 
 
 ## Authentication setup (Supabase)
 
-This app uses Supabase for auth. Access is restricted to `@tokatek.com` accounts (invite-only admin app).
+This app uses Supabase for auth. Any account in the Supabase project can sign in (no email-domain restriction).
 
 ### 1. Env
 
@@ -92,13 +92,13 @@ Never expose the `service_role` key to the client — there is no `VITE_*` varia
 - **Auth → Providers → Email**: Enabled. "Confirm email" = ON.
 - **Auth → Providers → Google**: Enabled. Paste Google OAuth client id/secret from the Google Cloud Console step below.
 - **Auth → URL Configuration**:
-  - Site URL: `http://localhost:5173` (dev) or your production URL
+  - Site URL: `http://localhost:3000` (dev) or your production URL
   - Redirect URLs: `${SITE}/oauth/callback`, `${SITE}/reset-password`
 - **Auth → Email Templates → Reset Password**: confirm the link points to `{{ .SiteURL }}/reset-password`.
 
 ### 3. Google Cloud Console — one-time
 
-- OAuth consent screen: **Internal** under the tokatek Workspace (this is the real domain restriction — Google refuses non-workspace accounts before they reach the app).
+- OAuth consent screen: **External** (any Google account can sign in). Switching from Internal requires publishing the app or adding test users while in testing mode.
 - Authorized redirect URIs: `${SUPABASE_URL}/auth/v1/callback`.
 
 ### 4. Creating users (invite-only)
@@ -177,6 +177,7 @@ A multi-agent pipeline that turns a feature brief or a Figma URL into a working,
 ### Artifacts
 
 Each run writes to `.claude/runs/<run-id>/` (gitignored):
+
 - `spec.json`, `impl-<n>.json`, `qa-<n>.json` — schema-validated phase outputs
 - `screenshots/` — one per acceptance criterion
 
@@ -187,6 +188,7 @@ Each run uses 3–6 subagent invocations. Expect roughly $0.50–$2.00 per featu
 ### Extending
 
 Edit `.claude/workflows/build-feature.js`:
+
 - Prompts and JSON schemas live as constants at the top of the file.
 - Control flow (retry count, phase ordering) lives in the orchestration block at the bottom.
 - To add a new role (e.g. backend agent), add a prompt builder + schema and insert a new `phase()` + `agent()` call.

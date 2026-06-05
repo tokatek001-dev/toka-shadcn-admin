@@ -9,13 +9,4 @@ describe('supabase client', () => {
     expect(typeof supabase.auth.getSession).toBe('function')
     expect(typeof supabase.auth.onAuthStateChange).toBe('function')
   })
-
-  it('isAllowedEmail returns true for @tokatek.com only', async () => {
-    const { isAllowedEmail } = await import('./supabase')
-    expect(isAllowedEmail('a@tokatek.com')).toBe(true)
-    expect(isAllowedEmail('A@TOKATEK.COM')).toBe(true)
-    expect(isAllowedEmail('a@gmail.com')).toBe(false)
-    expect(isAllowedEmail(null)).toBe(false)
-    expect(isAllowedEmail(undefined)).toBe(false)
-  })
 })

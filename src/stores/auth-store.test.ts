@@ -1,5 +1,7 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Session, User } from '@supabase/supabase-js'
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+// Import once. The store is a module-level singleton.
+import { useAuthStore } from './auth-store'
 
 const {
   onAuthStateChange,
@@ -39,9 +41,6 @@ vi.mock('@/lib/supabase', () => ({
       updateUser,
     },
   },
-  isAllowedEmail: (email?: string | null) =>
-    !!email && email.toLowerCase().endsWith('@tokatek.com'),
-  ALLOWED_EMAIL_DOMAIN: '@tokatek.com',
 }))
 
 // Defaults installed BEFORE the store first imports — the store hydrates
@@ -63,9 +62,6 @@ function makeSession(email: string): Session {
     user: { id: 'u1', email } as User,
   } as Session
 }
-
-// Import once. The store is a module-level singleton.
-import { useAuthStore } from './auth-store'
 
 // Capture the onAuthStateChange handler registered at module init.
 function getAuthHandler(): (event: string, session: Session | null) => void {
@@ -103,21 +99,13 @@ describe('useAuthStore', () => {
     expect(useAuthStore.getState().status).toBe('unauthenticated')
   })
 
-  it('initial getSession with @tokatek.com session sets authenticated + allowed', () => {
+  it('initial getSession with a session sets authenticated', () => {
     // Simulate the initial-session path by replaying the handler — same
     // code path that applySession() takes for getSession().
     const session = makeSession('user@tokatek.com')
     getAuthHandler()('INITIAL_SESSION', session)
     expect(useAuthStore.getState().status).toBe('authenticated')
-    expect(useAuthStore.getState().isAllowed()).toBe(true)
     expect(useAuthStore.getState().user?.email).toBe('user@tokatek.com')
-  })
-
-  it('isAllowed false for non-tokatek email', () => {
-    const session = makeSession('user@gmail.com')
-    getAuthHandler()('INITIAL_SESSION', session)
-    expect(useAuthStore.getState().status).toBe('authenticated')
-    expect(useAuthStore.getState().isAllowed()).toBe(false)
   })
 
   it('signInWithPassword forwards to supabase and returns its error', async () => {
@@ -141,7 +129,9 @@ describe('useAuthStore', () => {
     expect(signInWithOAuth).toHaveBeenCalledWith({
       provider: 'google',
       options: {
-        redirectTo: expect.stringContaining('/oauth/callback?redirect=%2Fusers'),
+        redirectTo: expect.stringContaining(
+          '/oauth/callback?redirect=%2Fusers'
+        ),
       },
     })
   })

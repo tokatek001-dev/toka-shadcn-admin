@@ -20,18 +20,12 @@ function OAuthCallback() {
       navigate({ to: '/sign-in', replace: true })
       return
     }
-    const unsub = useAuthStore.subscribe(async (s) => {
+    const unsub = useAuthStore.subscribe((s) => {
       if (s.status === 'loading') return
-      if (s.isAllowed()) {
-        unsub()
+      unsub()
+      if (s.status === 'authenticated') {
         navigate({ to: redirect || '/', replace: true })
-      } else if (s.status === 'authenticated') {
-        unsub()
-        await s.signOut()
-        toast.error('Tài khoản không có quyền truy cập')
-        navigate({ to: '/sign-in', replace: true })
       } else {
-        unsub()
         navigate({ to: '/sign-in', replace: true })
       }
     })

@@ -28,9 +28,3 @@ export const supabase = new Proxy({} as SupabaseClient, {
     return Reflect.get(getClient(), prop, receiver)
   },
 })
-
-export const ALLOWED_EMAIL_DOMAIN = '@tokatek.com'
-
-export function isAllowedEmail(email: string | undefined | null): boolean {
-  return !!email && email.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN)
-}

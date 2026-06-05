@@ -1,6 +1,6 @@
-import { create } from 'zustand'
 import type { AuthError, Session, User } from '@supabase/supabase-js'
-import { supabase, isAllowedEmail } from '@/lib/supabase'
+import { create } from 'zustand'
+import { supabase } from '@/lib/supabase'
 
 type Status = 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -18,7 +18,6 @@ interface AuthState {
   signOut: () => Promise<void>
   sendPasswordReset: (email: string) => Promise<{ error: AuthError | null }>
   updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>
-  isAllowed: () => boolean
 }
 
 function applySession(
@@ -32,7 +31,7 @@ function applySession(
   })
 }
 
-export const useAuthStore = create<AuthState>()((set, get) => {
+export const useAuthStore = create<AuthState>()((set) => {
   // Hydrate from existing session, then subscribe to changes.
   // Race note: onAuthStateChange also fires INITIAL_SESSION shortly after
   // subscription. Last-write-wins via applySession; supabase-js coalesces
@@ -88,11 +87,6 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         password: newPassword,
       })
       return { error }
-    },
-
-    isAllowed() {
-      const s = get()
-      return s.status === 'authenticated' && isAllowedEmail(s.user?.email)
     },
   }
 })
