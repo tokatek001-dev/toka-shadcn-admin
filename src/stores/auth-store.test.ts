@@ -1,76 +1,168 @@
-import { clearCookies } from '@/test-utils/cookies'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Session, User } from '@supabase/supabase-js'
 
-async function importAuthStore() {
-  const { useAuthStore } = await import('./auth-store')
-  return useAuthStore
+const {
+  onAuthStateChange,
+  getSession,
+  signInWithPassword,
+  signInWithOAuth,
+  signOut,
+  resetPasswordForEmail,
+  updateUser,
+} = vi.hoisted(() => {
+  const onAuthStateChange = vi.fn().mockReturnValue({
+    data: { subscription: { unsubscribe: vi.fn() } },
+  })
+  const getSession = vi
+    .fn()
+    .mockResolvedValue({ data: { session: null }, error: null })
+  return {
+    onAuthStateChange,
+    getSession,
+    signInWithPassword: vi.fn(),
+    signInWithOAuth: vi.fn(),
+    signOut: vi.fn(),
+    resetPasswordForEmail: vi.fn(),
+    updateUser: vi.fn(),
+  }
+})
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      onAuthStateChange,
+      getSession,
+      signInWithPassword,
+      signInWithOAuth,
+      signOut,
+      resetPasswordForEmail,
+      updateUser,
+    },
+  },
+  isAllowedEmail: (email?: string | null) =>
+    !!email && email.toLowerCase().endsWith('@tokatek.com'),
+  ALLOWED_EMAIL_DOMAIN: '@tokatek.com',
+}))
+
+// Defaults installed BEFORE the store first imports — the store hydrates
+// at module load and we only get one shot at that initial getSession in
+// browser-mode vitest (vi.resetModules + dynamic re-import does not
+// re-invoke the mock factory reliably).
+getSession.mockResolvedValue({ data: { session: null }, error: null })
+onAuthStateChange.mockReturnValue({
+  data: { subscription: { unsubscribe: vi.fn() } },
+})
+
+function makeSession(email: string): Session {
+  return {
+    access_token: 'a',
+    refresh_token: 'r',
+    expires_in: 3600,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    token_type: 'bearer',
+    user: { id: 'u1', email } as User,
+  } as Session
 }
 
-const sampleUser = {
-  accountNo: 'ACC-1',
-  email: 'user@example.com',
-  role: ['user'],
-  exp: 1_700_000_000,
+// Import once. The store is a module-level singleton.
+import { useAuthStore } from './auth-store'
+
+// Capture the onAuthStateChange handler registered at module init.
+function getAuthHandler(): (event: string, session: Session | null) => void {
+  const call = onAuthStateChange.mock.calls[0]
+  if (!call) throw new Error('onAuthStateChange was not registered')
+  return call[0] as (event: string, session: Session | null) => void
 }
 
 describe('useAuthStore', () => {
-  beforeEach(() => {
-    clearCookies()
-    vi.resetModules()
-  })
-
-  it('starts with an empty access token when nothing is persisted', async () => {
-    const useAuthStore = await importAuthStore()
-
-    expect(useAuthStore.getState().auth.accessToken).toBe('')
-    expect(useAuthStore.getState().auth.user).toBeNull()
-  })
-
-  it('persists access token so a new store instance reads it back', async () => {
-    const useAuthStore = await importAuthStore()
-    useAuthStore.getState().auth.setAccessToken('session-token')
-
-    vi.resetModules()
-    const useAuthStoreAfterReload = await importAuthStore()
-
-    expect(useAuthStoreAfterReload.getState().auth.accessToken).toBe(
-      'session-token'
+  beforeAll(async () => {
+    // Wait for initial hydration (status: loading -> unauthenticated).
+    await vi.waitFor(() =>
+      expect(useAuthStore.getState().status).toBe('unauthenticated')
     )
   })
 
-  it('clears persisted access token when resetAccessToken is used', async () => {
-    const useAuthStore = await importAuthStore()
-    useAuthStore.getState().auth.setAccessToken('to-clear')
-    useAuthStore.getState().auth.resetAccessToken()
-
-    vi.resetModules()
-    const useAuthStoreAfterReload = await importAuthStore()
-
-    expect(useAuthStoreAfterReload.getState().auth.accessToken).toBe('')
+  beforeEach(() => {
+    // Clear call history but preserve default implementations.
+    signInWithPassword.mockReset()
+    signInWithOAuth.mockReset()
+    signOut.mockReset()
+    resetPasswordForEmail.mockReset()
+    updateUser.mockReset()
+    // Reset store to a clean unauthenticated baseline.
+    useAuthStore.setState({
+      session: null,
+      user: null,
+      status: 'unauthenticated',
+    })
   })
 
-  it('updates the signed-in user via setUser', async () => {
-    const useAuthStore = await importAuthStore()
-
-    useAuthStore.getState().auth.setUser({ ...sampleUser })
-
-    expect(useAuthStore.getState().auth.user).toEqual(sampleUser)
+  it('starts in loading status, then resolves to unauthenticated', () => {
+    // After beforeAll the store is already hydrated. Verify it landed on
+    // unauthenticated given the default null-session mock.
+    expect(useAuthStore.getState().status).toBe('unauthenticated')
   })
 
-  it('reset clears user and access token and drops persistence', async () => {
-    const useAuthStore = await importAuthStore()
-    useAuthStore.getState().auth.setAccessToken('will-be-cleared')
-    useAuthStore.getState().auth.setUser({ ...sampleUser })
+  it('initial getSession with @tokatek.com session sets authenticated + allowed', () => {
+    // Simulate the initial-session path by replaying the handler — same
+    // code path that applySession() takes for getSession().
+    const session = makeSession('user@tokatek.com')
+    getAuthHandler()('INITIAL_SESSION', session)
+    expect(useAuthStore.getState().status).toBe('authenticated')
+    expect(useAuthStore.getState().isAllowed()).toBe(true)
+    expect(useAuthStore.getState().user?.email).toBe('user@tokatek.com')
+  })
 
-    useAuthStore.getState().auth.reset()
+  it('isAllowed false for non-tokatek email', () => {
+    const session = makeSession('user@gmail.com')
+    getAuthHandler()('INITIAL_SESSION', session)
+    expect(useAuthStore.getState().status).toBe('authenticated')
+    expect(useAuthStore.getState().isAllowed()).toBe(false)
+  })
 
-    expect(useAuthStore.getState().auth.user).toBeNull()
-    expect(useAuthStore.getState().auth.accessToken).toBe('')
+  it('signInWithPassword forwards to supabase and returns its error', async () => {
+    signInWithPassword.mockResolvedValue({
+      data: { session: null, user: null },
+      error: { message: 'Invalid login credentials' },
+    })
+    const result = await useAuthStore
+      .getState()
+      .signInWithPassword('a@tokatek.com', 'pw')
+    expect(signInWithPassword).toHaveBeenCalledWith({
+      email: 'a@tokatek.com',
+      password: 'pw',
+    })
+    expect(result.error?.message).toBe('Invalid login credentials')
+  })
 
-    vi.resetModules()
-    const useAuthStoreAfterReload = await importAuthStore()
+  it('signInWithGoogle calls signInWithOAuth with provider and redirect', async () => {
+    signInWithOAuth.mockResolvedValue({ data: {}, error: null })
+    await useAuthStore.getState().signInWithGoogle('/users')
+    expect(signInWithOAuth).toHaveBeenCalledWith({
+      provider: 'google',
+      options: {
+        redirectTo: expect.stringContaining('/oauth/callback?redirect=%2Fusers'),
+      },
+    })
+  })
 
-    expect(useAuthStoreAfterReload.getState().auth.user).toBeNull()
-    expect(useAuthStoreAfterReload.getState().auth.accessToken).toBe('')
+  it('signOut clears local session', async () => {
+    // Seed an authenticated session first.
+    getAuthHandler()('SIGNED_IN', makeSession('user@tokatek.com'))
+    expect(useAuthStore.getState().status).toBe('authenticated')
+
+    signOut.mockResolvedValue({ error: null })
+    await useAuthStore.getState().signOut()
+    expect(signOut).toHaveBeenCalled()
+    expect(useAuthStore.getState().session).toBeNull()
+    expect(useAuthStore.getState().user).toBeNull()
+    expect(useAuthStore.getState().status).toBe('unauthenticated')
+  })
+
+  it('onAuthStateChange handler updates state on SIGNED_IN', () => {
+    const session = makeSession('me@tokatek.com')
+    getAuthHandler()('SIGNED_IN', session)
+    expect(useAuthStore.getState().status).toBe('authenticated')
+    expect(useAuthStore.getState().user?.email).toBe('me@tokatek.com')
   })
 })

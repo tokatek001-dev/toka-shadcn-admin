@@ -1,53 +1,93 @@
 import { create } from 'zustand'
-import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
+import type { AuthError, Session, User } from '@supabase/supabase-js'
+import { supabase, isAllowedEmail } from '@/lib/supabase'
 
-const ACCESS_TOKEN = 'thisisjustarandomstring'
-
-interface AuthUser {
-  accountNo: string
-  email: string
-  role: string[]
-  exp: number
-}
+type Status = 'loading' | 'authenticated' | 'unauthenticated'
 
 interface AuthState {
-  auth: {
-    user: AuthUser | null
-    setUser: (user: AuthUser | null) => void
-    accessToken: string
-    setAccessToken: (accessToken: string) => void
-    resetAccessToken: () => void
-    reset: () => void
-  }
+  session: Session | null
+  user: User | null
+  status: Status
+  signInWithPassword: (
+    email: string,
+    password: string
+  ) => Promise<{ error: AuthError | null }>
+  signInWithGoogle: (
+    redirectPath?: string
+  ) => Promise<{ error: AuthError | null }>
+  signOut: () => Promise<void>
+  sendPasswordReset: (email: string) => Promise<{ error: AuthError | null }>
+  updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>
+  isAllowed: () => boolean
 }
 
-export const useAuthStore = create<AuthState>()((set) => {
-  const cookieState = getCookie(ACCESS_TOKEN)
-  const initToken = cookieState ? JSON.parse(cookieState) : ''
+function applySession(
+  set: (partial: Partial<AuthState>) => void,
+  session: Session | null
+) {
+  set({
+    session,
+    user: session?.user ?? null,
+    status: session ? 'authenticated' : 'unauthenticated',
+  })
+}
+
+export const useAuthStore = create<AuthState>()((set, get) => {
+  // Hydrate from existing session, then subscribe to changes.
+  void supabase.auth.getSession().then(({ data }) => {
+    applySession(set, data.session)
+  })
+
+  supabase.auth.onAuthStateChange((_event, session) => {
+    applySession(set, session)
+  })
+
   return {
-    auth: {
-      user: null,
-      setUser: (user) =>
-        set((state) => ({ ...state, auth: { ...state.auth, user } })),
-      accessToken: initToken,
-      setAccessToken: (accessToken) =>
-        set((state) => {
-          setCookie(ACCESS_TOKEN, JSON.stringify(accessToken))
-          return { ...state, auth: { ...state.auth, accessToken } }
-        }),
-      resetAccessToken: () =>
-        set((state) => {
-          removeCookie(ACCESS_TOKEN)
-          return { ...state, auth: { ...state.auth, accessToken: '' } }
-        }),
-      reset: () =>
-        set((state) => {
-          removeCookie(ACCESS_TOKEN)
-          return {
-            ...state,
-            auth: { ...state.auth, user: null, accessToken: '' },
-          }
-        }),
+    session: null,
+    user: null,
+    status: 'loading',
+
+    async signInWithPassword(email, password) {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      return { error }
+    },
+
+    async signInWithGoogle(redirectPath) {
+      const callback = new URL('/oauth/callback', window.location.origin)
+      if (redirectPath) callback.searchParams.set('redirect', redirectPath)
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: callback.toString() },
+      })
+      return { error }
+    },
+
+    async signOut() {
+      await supabase.auth.signOut()
+      applySession(set, null)
+    },
+
+    async sendPasswordReset(email) {
+      const redirectTo = `${window.location.origin}/reset-password`
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      })
+      return { error }
+    },
+
+    async updatePassword(newPassword) {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+      return { error }
+    },
+
+    isAllowed() {
+      const s = get()
+      return s.status === 'authenticated' && isAllowedEmail(s.user?.email)
     },
   }
 })
