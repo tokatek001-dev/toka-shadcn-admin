@@ -1,5 +1,6 @@
 import {
   Construction,
+  FileText,
   LayoutDashboard,
   Monitor,
   Bug,
@@ -121,6 +122,11 @@ export const sidebarData: SidebarData = {
               icon: Construction,
             },
           ],
+        },
+        {
+          title: 'Entry',
+          url: '/entry',
+          icon: FileText,
         },
       ],
     },
