@@ -179,54 +179,52 @@ Output rules:
 
 // ─── Orchestration ───────────────────────────────────────────────
 
-export default async function main() {
-  if (!args || typeof args !== 'string' || args.trim() === '') {
-    throw new Error('build-feature requires an args string: either a feature brief or a Figma URL.')
-  }
+if (!args || typeof args !== 'string' || args.trim() === '') {
+  throw new Error('build-feature requires an args string: either a feature brief or a Figma URL.')
+}
 
-  const input = args.trim()
-  const isFigma = input.startsWith('https://www.figma.com/') || input.startsWith('https://figma.com/')
+const input = args.trim()
+const isFigma = input.startsWith('https://www.figma.com/') || input.startsWith('https://figma.com/')
 
-  log(`Input: ${isFigma ? 'Figma URL' : 'brief'} (${input.slice(0, 80)}${input.length > 80 ? '…' : ''})`)
+log(`Input: ${isFigma ? 'Figma URL' : 'brief'} (${input.slice(0, 80)}${input.length > 80 ? '…' : ''})`)
 
-  phase('Design')
-  const spec = await agent(
-    isFigma ? designerFigmaPrompt(input) : designerBriefPrompt(input),
-    { schema: SPEC_SCHEMA, agentType: 'Explore', label: 'designer' }
+phase('Design')
+const spec = await agent(
+  isFigma ? designerFigmaPrompt(input) : designerBriefPrompt(input),
+  { schema: SPEC_SCHEMA, agentType: 'Explore', label: 'designer' }
+)
+log(`Spec: ${spec.title} @ ${spec.route} — ${spec.acceptanceCriteria.length} acceptance criteria`)
+
+let qa = null
+let attempt = 0
+let lastFix = null
+const MAX_ATTEMPTS = 3
+
+while (attempt < MAX_ATTEMPTS) {
+  const label = attempt === 0 ? 'Frontend' : `Frontend (retry ${attempt})`
+  phase(label)
+  const impl = await agent(
+    frontendPrompt(spec, lastFix),
+    { schema: IMPL_SCHEMA, label: `frontend:${attempt}` }
   )
-  log(`Spec: ${spec.title} @ ${spec.route} — ${spec.acceptanceCriteria.length} acceptance criteria`)
+  log(`Impl ${attempt}: ${impl.filesChanged.length} files changed, target ${impl.testTargetUrl}`)
 
-  let qa = null
-  let attempt = 0
-  let lastFix = null
-  const MAX_ATTEMPTS = 3
+  const qaLabel = attempt === 0 ? 'QA' : `QA (retry ${attempt})`
+  phase(qaLabel)
+  qa = await agent(
+    qaPrompt(spec, impl),
+    { schema: QA_SCHEMA, label: `qa:${attempt}` }
+  )
+  log(`QA ${attempt}: passed=${qa.passed}, ${qa.criteriaResults.filter(c => c.passed).length}/${qa.criteriaResults.length} criteria, ${qa.consoleErrors.length} console errors`)
 
-  while (attempt < MAX_ATTEMPTS) {
-    const label = attempt === 0 ? 'Frontend' : `Frontend (retry ${attempt})`
-    phase(label)
-    const impl = await agent(
-      frontendPrompt(spec, lastFix),
-      { schema: IMPL_SCHEMA, label: `frontend:${attempt}` }
-    )
-    log(`Impl ${attempt}: ${impl.filesChanged.length} files changed, target ${impl.testTargetUrl}`)
+  if (qa.passed) break
+  lastFix = qa.failureReport || 'QA reported failure but no failureReport was provided.'
+  attempt++
+}
 
-    const qaLabel = attempt === 0 ? 'QA' : `QA (retry ${attempt})`
-    phase(qaLabel)
-    qa = await agent(
-      qaPrompt(spec, impl),
-      { schema: QA_SCHEMA, label: `qa:${attempt}` }
-    )
-    log(`QA ${attempt}: passed=${qa.passed}, ${qa.criteriaResults.filter(c => c.passed).length}/${qa.criteriaResults.length} criteria, ${qa.consoleErrors.length} console errors`)
-
-    if (qa.passed) break
-    lastFix = qa.failureReport || 'QA reported failure but no failureReport was provided.'
-    attempt++
-  }
-
-  return {
-    spec,
-    qa,
-    attempts: attempt + 1,
-    passed: qa?.passed === true,
-  }
+return {
+  spec,
+  qa,
+  attempts: attempt + 1,
+  passed: qa?.passed === true,
 }
