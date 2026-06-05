@@ -5,9 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
-import { IconFacebook, IconGithub } from '@/assets/brand-icons'
 import { useAuthStore } from '@/stores/auth-store'
-import { sleep, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -40,37 +39,47 @@ export function UserAuthForm({
   ...props
 }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const navigate = useNavigate()
-  // NOTE: legacy mock auth removed — Task 5 will wire real Supabase sign-in here.
-  void useAuthStore
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
   })
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
+    const { signInWithPassword } = useAuthStore.getState()
+    const { error } = await signInWithPassword(data.email, data.password)
+    setIsLoading(false)
 
-    toast.promise(sleep(2000), {
-      loading: 'Signing in...',
-      success: () => {
-        setIsLoading(false)
+    if (error) {
+      toast.error('Email hoặc mật khẩu không đúng')
+      return
+    }
 
-        // Mock auth removed; real Supabase sign-in lands in Task 5.
+    const { isAllowed, signOut } = useAuthStore.getState()
+    if (!isAllowed()) {
+      await signOut()
+      toast.error('Tài khoản không có quyền truy cập')
+      return
+    }
 
-        // Redirect to the stored location or default to dashboard
-        const targetPath = redirectTo || '/'
-        navigate({ to: targetPath, replace: true })
-
-        return `Welcome back, ${data.email}!`
-      },
-      error: 'Error',
-    })
+    navigate({ to: redirectTo || '/', replace: true })
   }
+
+  async function onGoogle() {
+    setIsGoogleLoading(true)
+    const { signInWithGoogle } = useAuthStore.getState()
+    const { error } = await signInWithGoogle(redirectTo)
+    if (error) {
+      setIsGoogleLoading(false)
+      toast.error('Không kết nối được Google, thử lại sau')
+    }
+    // On success Supabase redirects away; no local navigate.
+  }
+
+  const busy = isLoading || isGoogleLoading
 
   return (
     <Form {...form}>
@@ -86,7 +95,11 @@ export function UserAuthForm({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder='name@example.com' {...field} />
+                <Input
+                  placeholder='name@tokatek.com'
+                  autoComplete='email'
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -99,7 +112,11 @@ export function UserAuthForm({
             <FormItem className='relative'>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <PasswordInput placeholder='********' {...field} />
+                <PasswordInput
+                  placeholder='********'
+                  autoComplete='current-password'
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
               <Link
@@ -111,7 +128,7 @@ export function UserAuthForm({
             </FormItem>
           )}
         />
-        <Button className='mt-2' disabled={isLoading}>
+        <Button className='mt-2' disabled={busy} type='submit'>
           {isLoading ? <Loader2 className='animate-spin' /> : <LogIn />}
           Sign in
         </Button>
@@ -127,14 +144,15 @@ export function UserAuthForm({
           </div>
         </div>
 
-        <div className='grid grid-cols-2 gap-2'>
-          <Button variant='outline' type='button' disabled={isLoading}>
-            <IconGithub className='h-4 w-4' /> GitHub
-          </Button>
-          <Button variant='outline' type='button' disabled={isLoading}>
-            <IconFacebook className='h-4 w-4' /> Facebook
-          </Button>
-        </div>
+        <Button
+          variant='outline'
+          type='button'
+          disabled={busy}
+          onClick={onGoogle}
+        >
+          {isGoogleLoading ? <Loader2 className='animate-spin' /> : null}
+          Continue with Google
+        </Button>
       </form>
     </Form>
   )

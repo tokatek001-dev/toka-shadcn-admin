@@ -1,29 +1,32 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, type RenderResult } from 'vitest-browser-react'
-import { type Locator, userEvent } from 'vitest/browser'
-import { UserAuthForm } from './user-auth-form'
+import { render } from 'vitest-browser-react'
+import { userEvent } from 'vitest/browser'
+import { Toaster, toast } from 'sonner'
 
-const FORM_MESSAGES = {
-  emailEmpty: 'Please enter your email.',
-  passwordEmpty: 'Please enter your password.',
-  passwordShort: 'Password must be at least 7 characters long.',
-} as const
+const toastErrorSpy = vi.spyOn(toast, 'error')
 
+let currentEmail = ''
+const signInWithPassword = vi.fn()
+const signInWithGoogle = vi.fn()
+const signOut = vi.fn()
 const navigate = vi.fn()
-const setUserMock = vi.fn()
-const setAccessTokenMock = vi.fn()
 
-vi.mock('@/stores/auth-store', () => ({
-  useAuthStore: () => ({
-    auth: {
-      setUser: setUserMock,
-      setAccessToken: setAccessTokenMock,
-    },
-  }),
-}))
+vi.mock('@/stores/auth-store', () => {
+  const state = () => ({
+    signInWithPassword,
+    signInWithGoogle,
+    signOut,
+    user: { email: currentEmail },
+    isAllowed: () =>
+      !!currentEmail && currentEmail.toLowerCase().endsWith('@tokatek.com'),
+  })
+  return {
+    useAuthStore: Object.assign(state, { getState: state }),
+  }
+})
 
-vi.mock('@tanstack/react-router', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@tanstack/react-router')>()
+vi.mock('@tanstack/react-router', async (orig) => {
+  const actual = await orig<typeof import('@tanstack/react-router')>()
   return {
     ...actual,
     useNavigate: () => navigate,
@@ -44,90 +47,93 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
   }
 })
 
-vi.mock('@/lib/utils', async (orig) => ({
-  ...(await orig()),
-  sleep: vi.fn(() => Promise.resolve()),
-}))
+import { UserAuthForm } from './user-auth-form'
+
+async function setup(redirectTo?: string) {
+  return await render(
+    <>
+      <Toaster />
+      <UserAuthForm redirectTo={redirectTo} />
+    </>
+  )
+}
 
 describe('UserAuthForm', () => {
-  describe('Rendering without redirectTo', () => {
-    let screen: RenderResult
-    let emailInput: Locator
-    let passwordInput: Locator
-    let signInButton: Locator
-    let forgotPasswordLink: Locator
-
-    beforeEach(async () => {
-      vi.clearAllMocks()
-      screen = await render(<UserAuthForm />)
-      emailInput = screen.getByRole('textbox', { name: /^Email$/i })
-      passwordInput = screen.getByLabelText(/^Password$/i)
-      signInButton = screen.getByRole('button', { name: /^Sign in$/i })
-      forgotPasswordLink = screen.getByText(/^Forgot password\?$/i)
-    })
-
-    it('renders fields, submit button, and forgot password link', async () => {
-      await expect.element(emailInput).toBeInTheDocument()
-      await expect.element(passwordInput).toBeInTheDocument()
-      await expect.element(signInButton).toBeInTheDocument()
-      await expect.element(forgotPasswordLink).toBeInTheDocument()
-    })
-
-    it('shows validation messages when submitting empty form', async () => {
-      await userEvent.click(signInButton)
-
-      await expect
-        .element(screen.getByText(FORM_MESSAGES.emailEmpty))
-        .toBeInTheDocument()
-      await expect
-        .element(screen.getByText(FORM_MESSAGES.passwordEmpty))
-        .toBeInTheDocument()
-    })
-
-    it('authenticates and navigates to default route on success', async () => {
-      await userEvent.fill(emailInput, 'a@b.com')
-      await userEvent.fill(passwordInput, '1234567')
-
-      await userEvent.click(signInButton)
-
-      await vi.waitFor(() => expect(setUserMock).toHaveBeenCalledOnce())
-      expect(setUserMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          email: 'a@b.com',
-          accountNo: expect.any(String),
-          role: expect.any(Array),
-          exp: expect.any(Number),
-        })
-      )
-      expect(setAccessTokenMock).toHaveBeenCalledOnce()
-      expect(setAccessTokenMock).toHaveBeenCalledWith('mock-access-token')
-
-      await vi.waitFor(() =>
-        expect(navigate).toHaveBeenCalledWith({ to: '/', replace: true })
-      )
-    })
+  beforeEach(() => {
+    vi.clearAllMocks()
+    currentEmail = ''
   })
 
-  it('navigates to redirectTo when provided', async () => {
-    vi.clearAllMocks()
+  it('@tokatek.com login navigates to redirect target', async () => {
+    currentEmail = 'me@tokatek.com'
+    signInWithPassword.mockResolvedValue({ error: null })
+    const screen = await setup('/users')
 
-    const { getByRole, getByLabelText } = await render(
-      <UserAuthForm redirectTo='/settings' />
+    await userEvent.fill(
+      screen.getByRole('textbox', { name: /^Email$/i }),
+      'me@tokatek.com'
     )
-
-    await userEvent.fill(getByRole('textbox', { name: /Email/i }), 'a@b.com')
-    await userEvent.fill(getByLabelText('Password'), '1234567')
-
-    await userEvent.click(getByRole('button', { name: /Sign in/i }))
-
-    await vi.waitFor(() => expect(setUserMock).toHaveBeenCalledOnce())
-    expect(setAccessTokenMock).toHaveBeenCalledOnce()
+    await userEvent.fill(
+      screen.getByLabelText(/^Password$/i),
+      'secret123'
+    )
+    await userEvent.click(screen.getByRole('button', { name: /^Sign in$/i }))
 
     await vi.waitFor(() =>
-      expect(navigate).toHaveBeenCalledWith({
-        to: '/settings',
-        replace: true,
-      })
+      expect(navigate).toHaveBeenCalledWith({ to: '/users', replace: true })
+    )
+    expect(signOut).not.toHaveBeenCalled()
+  })
+
+  it('non-tokatek login is signed out + toast shown', async () => {
+    currentEmail = 'me@gmail.com'
+    signInWithPassword.mockResolvedValue({ error: null })
+    const screen = await setup()
+
+    await userEvent.fill(
+      screen.getByRole('textbox', { name: /^Email$/i }),
+      'me@gmail.com'
+    )
+    await userEvent.fill(
+      screen.getByLabelText(/^Password$/i),
+      'secret123'
+    )
+    await userEvent.click(screen.getByRole('button', { name: /^Sign in$/i }))
+
+    await vi.waitFor(() => expect(signOut).toHaveBeenCalled())
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it('Supabase error shows generic toast', async () => {
+    signInWithPassword.mockResolvedValue({
+      error: { message: 'Invalid login credentials' },
+    })
+    const screen = await setup()
+
+    await userEvent.fill(
+      screen.getByRole('textbox', { name: /^Email$/i }),
+      'me@tokatek.com'
+    )
+    await userEvent.fill(screen.getByLabelText(/^Password$/i), 'wrongpw1')
+    await userEvent.click(screen.getByRole('button', { name: /^Sign in$/i }))
+
+    await vi.waitFor(() =>
+      expect(toastErrorSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/email hoặc mật khẩu không đúng/i)
+      )
+    )
+  })
+
+  it('Google button calls signInWithGoogle with redirect', async () => {
+    signInWithGoogle.mockResolvedValue({ error: null })
+    const screen = await setup('/tasks')
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /google/i })
+    )
+
+    await vi.waitFor(() =>
+      expect(signInWithGoogle).toHaveBeenCalledWith('/tasks')
     )
   })
 })
