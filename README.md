@@ -117,3 +117,46 @@ Crafted with 🤍 by [@satnaing](https://github.com/satnaing)
 ## License
 
 Licensed under the [MIT License](https://choosealicense.com/licenses/mit/)
+
+## Harness — `/build-feature`
+
+A multi-agent pipeline that turns a feature brief or a Figma URL into a working, QA-verified feature in this repo. Runs three phases: **Design → Frontend → QA**, with up to 2 automatic retries when QA fails.
+
+### Usage
+
+```bash
+# Brief input
+/build-feature "Add a bulk-edit dialog to the users table with confirmation step."
+
+# Figma input
+/build-feature https://www.figma.com/file/abc123/My-Design?node-id=1-2
+```
+
+### Pipeline
+
+1. **Designer** (read-only) expands the input into a JSON spec: route, components, data model, states, edge cases, acceptance criteria.
+2. **Frontend** implements the spec using TanStack Router routes, shadcn primitives, react-hook-form + zod, and TanStack Query. Must pass `pnpm lint` and `pnpm build` before handing off.
+3. **QA** spawns `pnpm dev`, drives Playwright via MCP, and verifies each acceptance criterion. Failures loop back to Frontend (max 2 retries).
+
+### Requirements
+
+- Playwright MCP server connected (`mcp__plugin_ecc_playwright__*`).
+- Figma MCP server connected if passing Figma URLs (`mcp__claude_ai_Figma__*`).
+- For auth-gated features: `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` set in `.env.local` (Supabase test user).
+
+### Artifacts
+
+Each run writes to `.claude/runs/<run-id>/` (gitignored):
+- `spec.json`, `impl-<n>.json`, `qa-<n>.json` — schema-validated phase outputs
+- `screenshots/` — one per acceptance criterion
+
+### Cost
+
+Each run uses 3–6 subagent invocations. Expect roughly $0.50–$2.00 per feature on Sonnet.
+
+### Extending
+
+Edit `.claude/workflows/build-feature.js`:
+- Prompts and JSON schemas live as constants at the top of the file.
+- Control flow (retry count, phase ordering) lives in the orchestration block at the bottom.
+- To add a new role (e.g. backend agent), add a prompt builder + schema and insert a new `phase()` + `agent()` call.
