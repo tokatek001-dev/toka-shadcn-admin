@@ -13,6 +13,7 @@ import { useAuthStore } from '@/stores/auth-store'
 import { handleServerError } from '@/lib/handle-server-error'
 import { DirectionProvider } from './context/direction-provider'
 import { FontProvider } from './context/font-provider'
+import { I18nProvider } from './context/i18n-provider'
 import { ThemeProvider } from './context/theme-provider'
 // Generated Routes
 import { routeTree } from './routeTree.gen'
@@ -99,7 +100,9 @@ if (!rootElement.innerHTML) {
           <FontProvider>
             <DirectionProvider>
               <RouterProvider router={router} />
-              {import.meta.env.DEV && <Agentation />}
+              {import.meta.env.DEV && (
+                <Agentation endpoint='http://localhost:4747' />
+              )}
             </DirectionProvider>
           </FontProvider>
         </ThemeProvider>
