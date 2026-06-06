@@ -35,6 +35,8 @@ import { Route as AuthenticatedSettingsAppearanceRouteImport } from './routes/_a
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
 import { Route as authOauthCallbackRouteImport } from './routes/(auth)/oauth.callback'
+import { Route as AuthenticatedEntryPartTestsIdRouteImport } from './routes/_authenticated/entry/part-tests/$id'
+import { Route as AuthenticatedEntryFullTestsIdRouteImport } from './routes/_authenticated/entry/full-tests/$id'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -174,6 +176,18 @@ const authOauthCallbackRoute = authOauthCallbackRouteImport.update({
   path: '/oauth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedEntryPartTestsIdRoute =
+  AuthenticatedEntryPartTestsIdRouteImport.update({
+    id: '/part-tests/$id',
+    path: '/part-tests/$id',
+    getParentRoute: () => AuthenticatedEntryRouteRoute,
+  } as any)
+const AuthenticatedEntryFullTestsIdRoute =
+  AuthenticatedEntryFullTestsIdRouteImport.update({
+    id: '/full-tests/$id',
+    path: '/full-tests/$id',
+    getParentRoute: () => AuthenticatedEntryRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -201,6 +215,8 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tasks/': typeof AuthenticatedTasksIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
+  '/entry/full-tests/$id': typeof AuthenticatedEntryFullTestsIdRoute
+  '/entry/part-tests/$id': typeof AuthenticatedEntryPartTestsIdRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoute
@@ -226,6 +242,8 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/entry/full-tests/$id': typeof AuthenticatedEntryFullTestsIdRoute
+  '/entry/part-tests/$id': typeof AuthenticatedEntryPartTestsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -255,6 +273,8 @@ export interface FileRoutesById {
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
+  '/_authenticated/entry/full-tests/$id': typeof AuthenticatedEntryFullTestsIdRoute
+  '/_authenticated/entry/part-tests/$id': typeof AuthenticatedEntryPartTestsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -284,6 +304,8 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/tasks/'
     | '/users/'
+    | '/entry/full-tests/$id'
+    | '/entry/part-tests/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -309,6 +331,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/users'
+    | '/entry/full-tests/$id'
+    | '/entry/part-tests/$id'
   id:
     | '__root__'
     | '/_authenticated'
@@ -337,6 +361,8 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/'
     | '/_authenticated/tasks/'
     | '/_authenticated/users/'
+    | '/_authenticated/entry/full-tests/$id'
+    | '/_authenticated/entry/part-tests/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -536,16 +562,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/entry/part-tests/$id': {
+      id: '/_authenticated/entry/part-tests/$id'
+      path: '/part-tests/$id'
+      fullPath: '/entry/part-tests/$id'
+      preLoaderRoute: typeof AuthenticatedEntryPartTestsIdRouteImport
+      parentRoute: typeof AuthenticatedEntryRouteRoute
+    }
+    '/_authenticated/entry/full-tests/$id': {
+      id: '/_authenticated/entry/full-tests/$id'
+      path: '/full-tests/$id'
+      fullPath: '/entry/full-tests/$id'
+      preLoaderRoute: typeof AuthenticatedEntryFullTestsIdRouteImport
+      parentRoute: typeof AuthenticatedEntryRouteRoute
+    }
   }
 }
 
 interface AuthenticatedEntryRouteRouteChildren {
   AuthenticatedEntryIndexRoute: typeof AuthenticatedEntryIndexRoute
+  AuthenticatedEntryFullTestsIdRoute: typeof AuthenticatedEntryFullTestsIdRoute
+  AuthenticatedEntryPartTestsIdRoute: typeof AuthenticatedEntryPartTestsIdRoute
 }
 
 const AuthenticatedEntryRouteRouteChildren: AuthenticatedEntryRouteRouteChildren =
   {
     AuthenticatedEntryIndexRoute: AuthenticatedEntryIndexRoute,
+    AuthenticatedEntryFullTestsIdRoute: AuthenticatedEntryFullTestsIdRoute,
+    AuthenticatedEntryPartTestsIdRoute: AuthenticatedEntryPartTestsIdRoute,
   }
 
 const AuthenticatedEntryRouteRouteWithChildren =

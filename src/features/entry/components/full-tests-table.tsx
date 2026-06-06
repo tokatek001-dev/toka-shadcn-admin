@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import {
   type ColumnFiltersState,
   type VisibilityState,
@@ -53,6 +54,7 @@ function getString(filters: ColumnFiltersState, id: string): string {
 }
 
 export function FullTestsTable({ search, navigate }: FullTestsTableProps) {
+  const routeNavigate = useNavigate()
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const {
@@ -205,7 +207,16 @@ export function FullTestsTable({ search, navigate }: FullTestsTableProps) {
               <TableBody>
                 {table.getRowModel().rows.length ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} className='group/row'>
+                    <TableRow
+                      key={row.id}
+                      className='group/row cursor-pointer'
+                      onClick={() =>
+                        void routeNavigate({
+                          to: '/entry/full-tests/$id',
+                          params: { id: row.original.id },
+                        })
+                      }
+                    >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
                           {flexRender(
