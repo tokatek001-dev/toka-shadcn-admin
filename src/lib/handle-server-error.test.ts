@@ -15,8 +15,14 @@ beforeEach(() => {
 })
 
 describe('handleServerError', () => {
-  it('shows a generic message when the error is not recognised', () => {
+  it('surfaces the message of a plain Error (e.g. supabase failures)', () => {
     handleServerError(new Error('network'))
+
+    expect(toastError).toHaveBeenCalledWith('network')
+  })
+
+  it('shows a generic message when the error has no message', () => {
+    handleServerError(new Error(''))
 
     expect(toastError).toHaveBeenCalledWith('Something went wrong!')
   })
