@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table'
+import { useNavigate } from '@tanstack/react-router'
 import { AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type NavigateFn, useTableUrlState } from '@/hooks/use-table-url-state'
@@ -54,6 +55,7 @@ function getString(filters: ColumnFiltersState, id: string): string {
 }
 
 export function PartTestsTable({ search, navigate }: PartTestsTableProps) {
+  const routeNavigate = useNavigate()
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const {
@@ -201,7 +203,16 @@ export function PartTestsTable({ search, navigate }: PartTestsTableProps) {
               <TableBody>
                 {table.getRowModel().rows.length ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} className='group/row'>
+                    <TableRow
+                      key={row.id}
+                      className='group/row cursor-pointer'
+                      onClick={() =>
+                        void routeNavigate({
+                          to: '/entry/part-tests/$id',
+                          params: { id: row.original.id },
+                        })
+                      }
+                    >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
                           {flexRender(
