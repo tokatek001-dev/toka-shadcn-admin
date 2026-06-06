@@ -94,6 +94,9 @@ export function UsersTable({ search, navigate }: UsersTableProps) {
       columnVisibility,
     },
     enableRowSelection: true,
+    // Stable row ids: selection must track user ids, not page-relative
+    // indexes, or paging would silently retarget bulk actions.
+    getRowId: (row) => row.id,
     manualPagination: true,
     manualFiltering: true,
     pageCount,
@@ -105,8 +108,12 @@ export function UsersTable({ search, navigate }: UsersTableProps) {
   })
 
   useEffect(() => {
-    ensurePageInRange(pageCount)
-  }, [pageCount, ensurePageInRange])
+    // Skip while the first load is in flight: count is still 0 then, and
+    // clamping against that would bounce a bookmarked ?page=N back to 1.
+    if (!isLoading) {
+      ensurePageInRange(pageCount)
+    }
+  }, [isLoading, pageCount, ensurePageInRange])
 
   return (
     <div
