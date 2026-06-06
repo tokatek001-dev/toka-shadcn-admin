@@ -17,9 +17,10 @@ export function useIsAdmin() {
         .from('user_profiles')
         .select('role')
         .eq('id', user!.id)
-        .single()
+        .maybeSingle()
       if (error) throw new Error(error.message)
-      return (data as { role: string | null }).role
+      // No profile row → not an admin (fail closed, no error noise).
+      return (data as { role: string | null } | null)?.role ?? null
     },
   })
 
