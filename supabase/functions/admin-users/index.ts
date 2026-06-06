@@ -25,6 +25,10 @@ function json(body: unknown, status = 200): Response {
   })
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
@@ -50,12 +54,23 @@ Deno.serve(async (req) => {
       return json({ error: 'Forbidden: admin only' }, 403)
     }
 
-    const payload = (await req.json()) as AdminUsersPayload
+    let payload: AdminUsersPayload
+    try {
+      payload = (await req.json()) as AdminUsersPayload
+    } catch {
+      return json({ error: 'Invalid or missing JSON body' }, 400)
+    }
 
     switch (payload.action) {
       case 'create': {
         if (!payload.email || !payload.password || !payload.displayName) {
           return json({ error: 'email, password and displayName are required' }, 400)
+        }
+        if (!EMAIL_RE.test(payload.email)) {
+          return json({ error: 'Invalid email address' }, 400)
+        }
+        if (payload.role !== 'admin' && payload.role !== 'user') {
+          return json({ error: 'role must be admin or user' }, 400)
         }
         // The on_auth_user_created trigger creates the user_profiles row.
         const { data, error } = await admin.auth.admin.createUser({
@@ -66,29 +81,52 @@ Deno.serve(async (req) => {
         })
         if (error) return json({ error: error.message }, 400)
         if (payload.role === 'admin') {
-          const { error: roleError } = await admin
+          const { data: updated, error: roleError } = await admin
             .from('user_profiles')
             .update({ role: 'admin' })
             .eq('id', data.user.id)
+            .select('id')
           if (roleError) return json({ error: roleError.message }, 500)
+          if (!updated || updated.length === 0) {
+            return json(
+              { error: 'Profile row not found for role assignment' },
+              500
+            )
+          }
         }
         return json({ ok: true, userId: data.user.id })
       }
       case 'invite': {
         if (!payload.email) return json({ error: 'email is required' }, 400)
+        if (!EMAIL_RE.test(payload.email)) {
+          return json({ error: 'Invalid email address' }, 400)
+        }
+        if (payload.role !== 'admin' && payload.role !== 'user') {
+          return json({ error: 'role must be admin or user' }, 400)
+        }
         const { data, error } = await admin.auth.admin.inviteUserByEmail(payload.email)
         if (error) return json({ error: error.message }, 400)
         if (payload.role === 'admin') {
-          const { error: roleError } = await admin
+          const { data: updated, error: roleError } = await admin
             .from('user_profiles')
             .update({ role: 'admin' })
             .eq('id', data.user.id)
+            .select('id')
           if (roleError) return json({ error: roleError.message }, 500)
+          if (!updated || updated.length === 0) {
+            return json(
+              { error: 'Profile row not found for role assignment' },
+              500
+            )
+          }
         }
         return json({ ok: true, userId: data.user.id })
       }
       case 'delete': {
         if (!payload.userId) return json({ error: 'userId is required' }, 400)
+        if (!UUID_RE.test(payload.userId)) {
+          return json({ error: 'userId must be a UUID' }, 400)
+        }
         if (payload.userId === caller.id) {
           return json({ error: 'You cannot delete your own account' }, 400)
         }
