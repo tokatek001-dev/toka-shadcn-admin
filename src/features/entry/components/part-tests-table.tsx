@@ -19,7 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
+import {
+  DataTablePagination,
+  DataTableToolbar,
+  TableSkeleton,
+} from '@/components/data-table'
 import {
   levelOptions,
   partDocumentStatusOptions,
@@ -32,7 +36,6 @@ import {
 } from '../hooks/use-part-tests-data'
 import { entryColumnsPartTests as columns } from './entry-columns-part-tests'
 import { EntryEmptyState } from './entry-empty-state'
-import { EntryTableSkeleton } from './entry-table-skeleton'
 
 type PartTestsTableProps = {
   search: Record<string, unknown>
@@ -159,7 +162,7 @@ export function PartTestsTable({ search, navigate }: PartTestsTableProps) {
       ) : (
         <div className='overflow-hidden rounded-md border'>
           {isLoading ? (
-            <EntryTableSkeleton columnCount={columns.length} />
+            <TableSkeleton columnCount={columns.length} />
           ) : (
             <Table>
               <TableHeader>

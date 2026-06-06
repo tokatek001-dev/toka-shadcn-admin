@@ -1,15 +1,15 @@
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table'
 
-type EntryTableSkeletonProps = {
+type TableSkeletonProps = {
   columnCount: number
   rowCount?: number
 }
 
-export function EntryTableSkeleton({
+export function TableSkeleton({
   columnCount,
   rowCount = 8,
-}: EntryTableSkeletonProps) {
+}: TableSkeletonProps) {
   return (
     <Table>
       <TableBody>
