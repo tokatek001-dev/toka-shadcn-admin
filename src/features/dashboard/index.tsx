@@ -13,7 +13,6 @@ import { LanguageSwitch } from '@/components/layout/language-switch'
 import { Main } from '@/components/layout/main'
 import { TopNav } from '@/components/layout/top-nav'
 import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import { Analytics } from './components/analytics'
 import { Overview } from './components/overview'
@@ -25,7 +24,6 @@ export function Dashboard() {
       {/* ===== Top Heading ===== */}
       <Header>
         <TopNav links={topNav} className='me-auto' />
-        <Search />
         <LanguageSwitch />
         <ThemeSwitch />
         <ConfigDrawer />
@@ -195,26 +193,26 @@ export function Dashboard() {
 const topNav = [
   {
     title: 'Overview',
-    href: 'dashboard/overview',
+    href: '/',
     isActive: true,
     disabled: false,
   },
   {
     title: 'Customers',
-    href: 'dashboard/customers',
+    href: '/users',
     isActive: false,
-    disabled: true,
+    disabled: false,
   },
   {
-    title: 'Products',
-    href: 'dashboard/products',
+    title: 'Entry',
+    href: '/entry',
     isActive: false,
-    disabled: true,
+    disabled: false,
   },
   {
     title: 'Settings',
-    href: 'dashboard/settings',
+    href: '/settings',
     isActive: false,
-    disabled: true,
+    disabled: false,
   },
 ]
