@@ -342,6 +342,172 @@ describe('useTableUrlState', () => {
     expect(navigate).not.toHaveBeenCalled()
   })
 
+  it('returns undefined sorting when sorting is not configured', async () => {
+    const navigate = vi.fn() as Mock<NavigateFn>
+    const { result } = await renderHook(() =>
+      useTableUrlState({ search: {}, navigate })
+    )
+
+    expect(result.current.sorting).toBeUndefined()
+    expect(result.current.onSortingChange).toBeUndefined()
+  })
+
+  it('derives default sorting when search has no sort keys', async () => {
+    const navigate = vi.fn() as Mock<NavigateFn>
+    const { result } = await renderHook(() =>
+      useTableUrlState({
+        search: {},
+        navigate,
+        sorting: {
+          defaultColumn: 'updated_at',
+          defaultDesc: true,
+          allowedColumns: ['name', 'updated_at'],
+        },
+      })
+    )
+
+    expect(result.current.sorting).toEqual([{ id: 'updated_at', desc: true }])
+  })
+
+  it('derives sorting from search params', async () => {
+    const navigate = vi.fn() as Mock<NavigateFn>
+    const { result } = await renderHook(() =>
+      useTableUrlState({
+        search: { sortBy: 'name', sortDesc: false },
+        navigate,
+        sorting: {
+          defaultColumn: 'updated_at',
+          defaultDesc: true,
+          allowedColumns: ['name', 'updated_at'],
+        },
+      })
+    )
+
+    expect(result.current.sorting).toEqual([{ id: 'name', desc: false }])
+  })
+
+  it('falls back to default sorting when sortBy is not in allowedColumns', async () => {
+    const navigate = vi.fn() as Mock<NavigateFn>
+    const { result } = await renderHook(() =>
+      useTableUrlState({
+        search: { sortBy: 'evil_column', sortDesc: false },
+        navigate,
+        sorting: {
+          defaultColumn: 'updated_at',
+          defaultDesc: true,
+          allowedColumns: ['name', 'updated_at'],
+        },
+      })
+    )
+
+    expect(result.current.sorting).toEqual([{ id: 'updated_at', desc: true }])
+  })
+
+  it('onSortingChange writes sort keys and clears page', async () => {
+    const navigate = vi.fn() as Mock<NavigateFn>
+    const prev = { page: 3, sortBy: undefined }
+    const { result, act } = await renderHook(() =>
+      useTableUrlState({
+        search: prev,
+        navigate,
+        sorting: {
+          defaultColumn: 'updated_at',
+          defaultDesc: true,
+          allowedColumns: ['name', 'updated_at'],
+        },
+      })
+    )
+
+    await act(() => {
+      result.current.onSortingChange?.([{ id: 'name', desc: true }])
+    })
+
+    expect(applyLastSearchFn(navigate, prev)).toMatchObject({
+      page: undefined,
+      sortBy: 'name',
+      sortDesc: true,
+    })
+  })
+
+  it('onSortingChange removes sort keys when sorting reverts to default', async () => {
+    const navigate = vi.fn() as Mock<NavigateFn>
+    const prev = { sortBy: 'name', sortDesc: false }
+    const { result, act } = await renderHook(() =>
+      useTableUrlState({
+        search: prev,
+        navigate,
+        sorting: {
+          defaultColumn: 'updated_at',
+          defaultDesc: true,
+          allowedColumns: ['name', 'updated_at'],
+        },
+      })
+    )
+
+    await act(() => {
+      result.current.onSortingChange?.([{ id: 'updated_at', desc: true }])
+    })
+
+    expect(applyLastSearchFn(navigate, prev)).toMatchObject({
+      sortBy: undefined,
+      sortDesc: undefined,
+    })
+  })
+
+  it('onSortingChange removes sort keys when sorting is cleared', async () => {
+    const navigate = vi.fn() as Mock<NavigateFn>
+    const prev = { sortBy: 'name', sortDesc: false }
+    const { result, act } = await renderHook(() =>
+      useTableUrlState({
+        search: prev,
+        navigate,
+        sorting: {
+          defaultColumn: 'updated_at',
+          defaultDesc: true,
+          allowedColumns: ['name', 'updated_at'],
+        },
+      })
+    )
+
+    await act(() => {
+      result.current.onSortingChange?.([])
+    })
+
+    expect(applyLastSearchFn(navigate, prev)).toMatchObject({
+      sortBy: undefined,
+      sortDesc: undefined,
+    })
+  })
+
+  it('supports custom sorting search keys', async () => {
+    const navigate = vi.fn() as Mock<NavigateFn>
+    const prev = { order: 'name', dir: true }
+    const { result, act } = await renderHook(() =>
+      useTableUrlState({
+        search: prev,
+        navigate,
+        sorting: {
+          sortByKey: 'order',
+          sortDescKey: 'dir',
+          defaultColumn: 'updated_at',
+          defaultDesc: true,
+          allowedColumns: ['name', 'updated_at'],
+        },
+      })
+    )
+
+    expect(result.current.sorting).toEqual([{ id: 'name', desc: true }])
+
+    await act(() => {
+      result.current.onSortingChange?.([{ id: 'name', desc: false }])
+    })
+
+    expect(applyLastSearchFn(navigate, prev)).toMatchObject({
+      order: 'name',
+      dir: false,
+    })
+  })
+
   it('uses custom serialize and deserialize for column filters', async () => {
     const navigate = vi.fn() as Mock<NavigateFn>
     const { result, act } = await renderHook(() =>

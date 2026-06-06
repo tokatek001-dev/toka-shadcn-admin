@@ -3,8 +3,10 @@ import { supabase } from '@/lib/supabase'
 import {
   FULL_TEST_SELECT,
   fullTestRowsSchema,
+  sortableEntryColumns,
   type FullTest,
 } from '../data/schema'
+import { type EntrySorting } from './use-part-tests-data'
 
 export type FullTestsFilters = {
   name?: string
@@ -13,10 +15,13 @@ export type FullTestsFilters = {
   document_status?: string[]
 }
 
+const DEFAULT_SORTING: EntrySorting = { id: 'updated_at', desc: true }
+
 type UseFullTestsDataParams = {
   pageIndex: number
   pageSize: number
   filters: FullTestsFilters
+  sorting?: EntrySorting
 }
 
 export const fullTestsKeys = {
@@ -34,14 +39,21 @@ async function fetchFullTests({
   pageIndex,
   pageSize,
   filters,
+  sorting = DEFAULT_SORTING,
 }: UseFullTestsDataParams): Promise<FullTestsQueryResult> {
   const from = pageIndex * pageSize
   const to = from + pageSize - 1
 
+  const sortColumn = (sortableEntryColumns as readonly string[]).includes(
+    sorting.id
+  )
+    ? sorting.id
+    : DEFAULT_SORTING.id
+
   let query = supabase
     .from('data_entry_full_test')
     .select(FULL_TEST_SELECT, { count: 'exact' })
-    .order('updated_at', { ascending: false })
+    .order(sortColumn, { ascending: !sorting.desc })
     .range(from, to)
 
   if (filters.name && filters.name.trim() !== '') {

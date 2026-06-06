@@ -37,6 +37,16 @@ export const fullDocumentStatusValues = [
   'DRAFT',
 ] as const
 
+// Media objects (cover, audio, ex_image) are loose jsonb blobs; we only care
+// about `path` (CDN-relative) and `name` here. Extra keys pass through.
+export const mediaObjectSchema = z
+  .looseObject({
+    name: z.string().nullable().optional(),
+    path: z.string().nullable().optional(),
+  })
+  .nullable()
+export type MediaObject = z.infer<typeof mediaObjectSchema>
+
 // Rows come from PostgREST: enum-constrained columns are nullable varchars,
 // so we keep them as plain strings and let the UI map them to labels.
 const partTestSchema = z.object({
@@ -49,6 +59,10 @@ const partTestSchema = z.object({
   duration_in_second: z.number().nullable(),
   document_status: z.string().nullable(),
   content_access_type: z.string().nullable(),
+  cover: mediaObjectSchema,
+  version: z.number(),
+  created_by: z.string(),
+  updated_by: z.string(),
   updated_at: z.string().nullable(),
 })
 export type PartTest = z.infer<typeof partTestSchema>
@@ -63,6 +77,10 @@ const fullTestSchema = z.object({
   duration_in_second: z.number().nullable(),
   document_status: z.string().nullable(),
   content_access_type: z.string().nullable(),
+  cover: mediaObjectSchema,
+  version: z.number(),
+  created_by: z.string(),
+  updated_by: z.string(),
   updated_at: z.string().nullable(),
 })
 export type FullTest = z.infer<typeof fullTestSchema>
@@ -70,12 +88,13 @@ export type FullTest = z.infer<typeof fullTestSchema>
 export const partTestRowsSchema = z.array(partTestSchema)
 export const fullTestRowsSchema = z.array(fullTestSchema)
 
-// Columns selected from Supabase for each table (avoid pulling heavy jsonb).
+// Columns selected from Supabase for each table (avoid pulling heavy jsonb;
+// `cover` is the only jsonb column and stays small).
 export const PART_TEST_SELECT =
-  'id, name, part, test_type, level, total_question, duration_in_second, document_status, content_access_type, updated_at'
+  'id, name, part, test_type, level, total_question, duration_in_second, document_status, content_access_type, cover, version, created_by, updated_by, updated_at'
 
 export const FULL_TEST_SELECT =
-  'id, name, test_type, parent_test_type, level, total_question, duration_in_second, document_status, content_access_type, updated_at'
+  'id, name, test_type, parent_test_type, level, total_question, duration_in_second, document_status, content_access_type, cover, version, created_by, updated_by, updated_at'
 
 // Shared option lists for toolbar faceted filters.
 export const partOptions = partValues.map((value) => ({
@@ -119,3 +138,13 @@ export const fullDocumentStatusOptions = fullDocumentStatusValues.map(
     value,
   })
 )
+
+// Server-side sortable columns, shared by both tabs. Anything else in the
+// URL falls back to the default `updated_at desc`.
+export const sortableEntryColumns = [
+  'name',
+  'total_question',
+  'duration_in_second',
+  'updated_at',
+  'version',
+] as const

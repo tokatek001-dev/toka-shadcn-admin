@@ -3,8 +3,18 @@ import { DataTableColumnHeader } from '@/components/data-table'
 import { LongText } from '@/components/long-text'
 import { formatDuration, formatUpdatedAt } from '../data/format'
 import { type PartTest } from '../data/schema'
+import { EntryCoverCell } from './entry-cover-cell'
 
 export const entryColumnsPartTests: ColumnDef<PartTest>[] = [
+  {
+    id: 'cover',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Cover' />
+    ),
+    cell: ({ row }) => <EntryCoverCell cover={row.original.cover} />,
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: 'name',
     header: ({ column }) => (
@@ -15,7 +25,7 @@ export const entryColumnsPartTests: ColumnDef<PartTest>[] = [
         {row.getValue('name') ?? '–'}
       </LongText>
     ),
-    enableSorting: false,
+    enableSorting: true,
     enableHiding: false,
   },
   {
@@ -62,7 +72,7 @@ export const entryColumnsPartTests: ColumnDef<PartTest>[] = [
       <DataTableColumnHeader column={column} title='Questions' />
     ),
     cell: ({ row }) => <div>{row.getValue('total_question') ?? '–'}</div>,
-    enableSorting: false,
+    enableSorting: true,
   },
   {
     accessorKey: 'duration_in_second',
@@ -74,7 +84,7 @@ export const entryColumnsPartTests: ColumnDef<PartTest>[] = [
         {formatDuration(row.getValue('duration_in_second'))}
       </div>
     ),
-    enableSorting: false,
+    enableSorting: true,
   },
   {
     accessorKey: 'document_status',
@@ -101,6 +111,36 @@ export const entryColumnsPartTests: ColumnDef<PartTest>[] = [
     enableSorting: false,
   },
   {
+    accessorKey: 'version',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Version' />
+    ),
+    cell: ({ row }) => (
+      <div className='tabular-nums'>{row.getValue('version')}</div>
+    ),
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'created_by',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Created By' />
+    ),
+    cell: ({ row }) => (
+      <div className='text-nowrap'>{row.getValue('created_by') || '–'}</div>
+    ),
+    enableSorting: false,
+  },
+  {
+    accessorKey: 'updated_by',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Updated By' />
+    ),
+    cell: ({ row }) => (
+      <div className='text-nowrap'>{row.getValue('updated_by') || '–'}</div>
+    ),
+    enableSorting: false,
+  },
+  {
     accessorKey: 'updated_at',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Updated' />
@@ -110,6 +150,6 @@ export const entryColumnsPartTests: ColumnDef<PartTest>[] = [
         {formatUpdatedAt(row.getValue('updated_at'))}
       </div>
     ),
-    enableSorting: false,
+    enableSorting: true,
   },
 ]

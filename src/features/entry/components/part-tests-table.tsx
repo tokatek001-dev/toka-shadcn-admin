@@ -29,6 +29,7 @@ import {
   partDocumentStatusOptions,
   partOptions,
   partTestTypeOptions,
+  sortableEntryColumns,
 } from '../data/schema'
 import {
   usePartTestsData,
@@ -60,12 +61,19 @@ export function PartTestsTable({ search, navigate }: PartTestsTableProps) {
     onColumnFiltersChange,
     pagination,
     onPaginationChange,
+    sorting,
+    onSortingChange,
     ensurePageInRange,
   } = useTableUrlState({
     search,
     navigate,
     pagination: { defaultPage: 1, defaultPageSize: 20 },
     globalFilter: { enabled: false },
+    sorting: {
+      defaultColumn: 'updated_at',
+      defaultDesc: true,
+      allowedColumns: sortableEntryColumns,
+    },
     columnFilters: [
       { columnId: 'name', searchKey: 'name', type: 'string' },
       { columnId: 'part', searchKey: 'part', type: 'array' },
@@ -94,6 +102,7 @@ export function PartTestsTable({ search, navigate }: PartTestsTableProps) {
     pageIndex: pagination.pageIndex,
     pageSize: pagination.pageSize,
     filters,
+    sorting: sorting?.[0],
   })
 
   const pageCount = Math.max(1, Math.ceil(count / pagination.pageSize))
@@ -102,12 +111,20 @@ export function PartTestsTable({ search, navigate }: PartTestsTableProps) {
   const table = useReactTable({
     data,
     columns,
-    state: { pagination, columnFilters, columnVisibility },
+    state: {
+      pagination,
+      columnFilters,
+      columnVisibility,
+      sorting: sorting ?? [],
+    },
     manualPagination: true,
     manualFiltering: true,
+    manualSorting: true,
+    enableMultiSort: false,
     pageCount,
     onPaginationChange,
     onColumnFiltersChange,
+    onSortingChange,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
   })

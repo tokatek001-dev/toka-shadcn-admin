@@ -28,6 +28,7 @@ import {
   fullDocumentStatusOptions,
   fullTestTypeOptions,
   parentTestTypeOptions,
+  sortableEntryColumns,
 } from '../data/schema'
 import {
   useFullTestsData,
@@ -59,12 +60,19 @@ export function FullTestsTable({ search, navigate }: FullTestsTableProps) {
     onColumnFiltersChange,
     pagination,
     onPaginationChange,
+    sorting,
+    onSortingChange,
     ensurePageInRange,
   } = useTableUrlState({
     search,
     navigate,
     pagination: { defaultPage: 1, defaultPageSize: 20 },
     globalFilter: { enabled: false },
+    sorting: {
+      defaultColumn: 'updated_at',
+      defaultDesc: true,
+      allowedColumns: sortableEntryColumns,
+    },
     columnFilters: [
       { columnId: 'name', searchKey: 'name', type: 'string' },
       { columnId: 'test_type', searchKey: 'test_type', type: 'array' },
@@ -95,6 +103,7 @@ export function FullTestsTable({ search, navigate }: FullTestsTableProps) {
     pageIndex: pagination.pageIndex,
     pageSize: pagination.pageSize,
     filters,
+    sorting: sorting?.[0],
   })
 
   const pageCount = Math.max(1, Math.ceil(count / pagination.pageSize))
@@ -103,12 +112,20 @@ export function FullTestsTable({ search, navigate }: FullTestsTableProps) {
   const table = useReactTable({
     data,
     columns,
-    state: { pagination, columnFilters, columnVisibility },
+    state: {
+      pagination,
+      columnFilters,
+      columnVisibility,
+      sorting: sorting ?? [],
+    },
     manualPagination: true,
     manualFiltering: true,
+    manualSorting: true,
+    enableMultiSort: false,
     pageCount,
     onPaginationChange,
     onColumnFiltersChange,
+    onSortingChange,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
   })
