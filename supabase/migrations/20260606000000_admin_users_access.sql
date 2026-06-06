@@ -67,6 +67,10 @@ begin
     raise exception 'Permission denied: admin only' using errcode = '42501';
   end if;
 
+  if p_page_size <= 0 or p_page_size > 200 then
+    raise exception 'p_page_size must be between 1 and 200' using errcode = '22023';
+  end if;
+
   return query
   select
     p.id,
