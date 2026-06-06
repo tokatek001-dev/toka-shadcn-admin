@@ -157,10 +157,7 @@ export function useTableUrlState(
     if (sortDefaultColumn === undefined) return undefined
     const rawBy = (search as SearchRecord)[sortByKey]
     const rawDesc = (search as SearchRecord)[sortDescKey]
-    if (
-      typeof rawBy === 'string' &&
-      sortAllowedColumns?.includes(rawBy)
-    ) {
+    if (typeof rawBy === 'string' && sortAllowedColumns?.includes(rawBy)) {
       return [{ id: rawBy, desc: rawDesc === true }]
     }
     return [{ id: sortDefaultColumn, desc: sortDefaultDesc === true }]
