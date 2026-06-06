@@ -11,7 +11,7 @@ import { mediaUrl } from '../../data/media'
 import { type MediaObject } from '../../data/schema'
 import { isUploadConfigured } from '../../data/upload'
 
-export type MediaItem = {
+type MediaItem = {
   label: string
   media: MediaObject | undefined
   kind: 'image' | 'file'
@@ -46,9 +46,15 @@ export function EntryMediaSection({ items }: EntryMediaSectionProps) {
                 ) : (
                   <div className='flex size-16 items-center justify-center rounded-md border bg-muted'>
                     {item.kind === 'image' ? (
-                      <ImageIcon className='size-5 text-muted-foreground' aria-hidden='true' />
+                      <ImageIcon
+                        className='size-5 text-muted-foreground'
+                        aria-hidden='true'
+                      />
                     ) : (
-                      <Paperclip className='size-5 text-muted-foreground' aria-hidden='true' />
+                      <Paperclip
+                        className='size-5 text-muted-foreground'
+                        aria-hidden='true'
+                      />
                     )}
                   </div>
                 )}
@@ -62,7 +68,11 @@ export function EntryMediaSection({ items }: EntryMediaSectionProps) {
                   <TooltipTrigger asChild>
                     {/* span wrapper: disabled buttons don't fire tooltip events */}
                     <span tabIndex={0}>
-                      <Button variant='outline' size='sm' disabled={!isUploadConfigured}>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        disabled={!isUploadConfigured}
+                      >
                         Replace
                       </Button>
                     </span>

@@ -40,7 +40,9 @@ vi.mock('@/hooks/use-is-admin', () => ({
 
 // Layout chrome needs sidebar/auth providers that aren't mounted in tests.
 vi.mock('@/components/layout/header', () => ({
-  Header: ({ children }: { children?: ReactNode }) => <header>{children}</header>,
+  Header: ({ children }: { children?: ReactNode }) => (
+    <header>{children}</header>
+  ),
 }))
 vi.mock('@/components/profile-dropdown', () => ({
   ProfileDropdown: () => null,
@@ -55,7 +57,11 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
     ...mod,
     useRouter: () => ({ history: { back: vi.fn() }, navigate: vi.fn() }),
     useCanGoBack: () => false,
-    useBlocker: () => ({ proceed: undefined, reset: undefined, status: 'idle' }),
+    useBlocker: () => ({
+      proceed: undefined,
+      reset: undefined,
+      status: 'idle',
+    }),
     Link: ({ children }: { children?: ReactNode }) => <a>{children}</a>,
   }
 })
@@ -126,9 +132,7 @@ describe('PartTestDetail', () => {
     const screen = await render(<PartTestDetail id='x' />)
 
     await expect.element(screen.getByLabelText(/^name$/i)).toBeDisabled()
-    expect(
-      screen.container.querySelector('button')
-    ).not.toBeNull() // Back button exists
+    expect(screen.container.querySelector('button')).not.toBeNull() // Back button exists
     await expect
       .element(screen.getByRole('button', { name: /^save$/i }))
       .not.toBeInTheDocument()

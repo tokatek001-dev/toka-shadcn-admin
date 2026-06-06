@@ -81,7 +81,10 @@ export function EntryDetailLayout({
                 <Button onClick={onSave} disabled={!isDirty || isSaving}>
                   Save
                 </Button>
-                <Button onClick={onSaveAndFinish} disabled={!isDirty || isSaving}>
+                <Button
+                  onClick={onSaveAndFinish}
+                  disabled={!isDirty || isSaving}
+                >
                   Save & Finish
                 </Button>
               </>
