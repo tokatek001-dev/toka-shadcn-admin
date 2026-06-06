@@ -46,10 +46,18 @@ export function UsersMultiDeleteDialog<TData>({
     onOpenChange(false)
 
     toast.promise(
-      deleteUsers.mutateAsync(deletableIds).then(() => {
-        setValue('')
-        table.resetRowSelection()
-      }),
+      deleteUsers.mutateAsync(deletableIds).then(
+        () => {
+          setValue('')
+          table.resetRowSelection()
+        },
+        (error) => {
+          // Clear the confirm word on failure too, so reopening the dialog
+          // requires re-confirmation before another destructive attempt.
+          setValue('')
+          throw error
+        }
+      ),
       {
         loading: 'Deleting users...',
         success: `Deleted ${deletableIds.length} ${
