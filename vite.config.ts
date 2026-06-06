@@ -27,6 +27,9 @@ export default defineConfig({
   test: {
     silent: 'passed-only',
     unstubEnvs: true,
+    // Only run tests from this checkout's src — never from git worktrees
+    // parked under .claude/worktrees (they carry their own test copies).
+    include: ['src/**/*.test.{ts,tsx}'],
     browser: {
       enabled: true,
       provider: playwright(),

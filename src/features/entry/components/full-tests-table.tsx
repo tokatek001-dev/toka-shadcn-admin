@@ -19,7 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
+import {
+  DataTablePagination,
+  DataTableToolbar,
+  TableSkeleton,
+} from '@/components/data-table'
 import {
   fullDocumentStatusOptions,
   fullTestTypeOptions,
@@ -31,7 +35,6 @@ import {
 } from '../hooks/use-full-tests-data'
 import { entryColumnsFullTests as columns } from './entry-columns-full-tests'
 import { EntryEmptyState } from './entry-empty-state'
-import { EntryTableSkeleton } from './entry-table-skeleton'
 
 type FullTestsTableProps = {
   search: Record<string, unknown>
@@ -163,7 +166,7 @@ export function FullTestsTable({ search, navigate }: FullTestsTableProps) {
       ) : (
         <div className='overflow-hidden rounded-md border'>
           {isLoading ? (
-            <EntryTableSkeleton columnCount={columns.length} />
+            <TableSkeleton columnCount={columns.length} />
           ) : (
             <Table>
               <TableHeader>

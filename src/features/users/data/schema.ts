@@ -1,30 +1,34 @@
 import { z } from 'zod'
 
-const userStatusSchema = z.union([
-  z.literal('active'),
-  z.literal('inactive'),
-  z.literal('invited'),
-  z.literal('suspended'),
-])
-export type UserStatus = z.infer<typeof userStatusSchema>
+export const userRoleValues = ['admin', 'user', 'anonymous'] as const
+export type UserRole = (typeof userRoleValues)[number]
 
-const userRoleSchema = z.union([
-  z.literal('superadmin'),
-  z.literal('admin'),
-  z.literal('cashier'),
-  z.literal('manager'),
-])
+// Rows come from the admin_list_user_profiles RPC (snake_case, with a
+// total_count window column repeated on every row).
+const userRowSchema = z
+  .object({
+    id: z.string(),
+    display_name: z.string().nullable(),
+    nick_name: z.string().nullable(),
+    avatar_url: z.string().nullable(),
+    email: z.string(),
+    role: z.enum(userRoleValues),
+    created_at: z.coerce.date(),
+    updated_at: z.coerce.date(),
+    total_count: z.number(),
+  })
+  .transform((row) => ({
+    id: row.id,
+    displayName: row.display_name ?? '',
+    nickName: row.nick_name ?? '',
+    avatarUrl: row.avatar_url,
+    email: row.email,
+    role: row.role,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    totalCount: row.total_count,
+  }))
 
-const _userSchema = z.object({
-  id: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  username: z.string(),
-  email: z.string(),
-  phoneNumber: z.string(),
-  status: userStatusSchema,
-  role: userRoleSchema,
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
-})
-export type User = z.infer<typeof _userSchema>
+export const userRowsSchema = z.array(userRowSchema)
+export type UserWithCount = z.infer<typeof userRowSchema>
+export type User = Omit<UserWithCount, 'totalCount'>

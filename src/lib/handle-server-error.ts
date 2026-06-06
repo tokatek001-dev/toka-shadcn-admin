@@ -18,6 +18,14 @@ export function handleServerError(error: unknown) {
     errMsg = 'No content.'
   }
 
+  if (
+    error instanceof Error &&
+    !(error instanceof AxiosError) &&
+    error.message
+  ) {
+    errMsg = error.message
+  }
+
   if (error instanceof AxiosError) {
     const title = error.response?.data?.title
     if (typeof title === 'string' && title.length > 0) {

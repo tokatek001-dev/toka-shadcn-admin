@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { MailPlus, Send } from 'lucide-react'
-import { showSubmittedData } from '@/lib/show-submitted-data'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -22,9 +22,12 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { SelectDropdown } from '@/components/select-dropdown'
-import { roles } from '../data/data'
+import { assignableRoles } from '../data/data'
+import {
+  useInviteUser,
+  type AssignableRole,
+} from '../hooks/use-users-mutations'
 
 const formSchema = z.object({
   email: z.email({
@@ -32,7 +35,6 @@ const formSchema = z.object({
       iss.input === '' ? 'Please enter an email to invite.' : undefined,
   }),
   role: z.string().min(1, 'Role is required.'),
-  desc: z.string().optional(),
 })
 
 type UserInviteForm = z.infer<typeof formSchema>
@@ -46,15 +48,24 @@ export function UsersInviteDialog({
   open,
   onOpenChange,
 }: UserInviteDialogProps) {
+  const inviteUser = useInviteUser()
   const form = useForm<UserInviteForm>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: '', role: '', desc: '' },
+    defaultValues: { email: '', role: '' },
   })
 
-  const onSubmit = (values: UserInviteForm) => {
-    form.reset()
-    showSubmittedData(values)
-    onOpenChange(false)
+  const onSubmit = async (values: UserInviteForm) => {
+    try {
+      await inviteUser.mutateAsync({
+        email: values.email,
+        role: values.role as AssignableRole,
+      })
+      toast.success('Invitation sent')
+      form.reset()
+      onOpenChange(false)
+    } catch {
+      // Error toast is shown by the global mutation onError handler.
+    }
   }
 
   return (
@@ -108,28 +119,11 @@ export function UsersInviteDialog({
                     defaultValue={field.value}
                     onValueChange={field.onChange}
                     placeholder='Select a role'
-                    items={roles.map(({ label, value }) => ({
+                    items={assignableRoles.map(({ label, value }) => ({
                       label,
                       value,
                     }))}
                   />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='desc'
-              render={({ field }) => (
-                <FormItem className=''>
-                  <FormLabel>Description (optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      className='resize-none'
-                      placeholder='Add a personal note to your invitation (optional)'
-                      {...field}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -140,7 +134,11 @@ export function UsersInviteDialog({
           <DialogClose asChild>
             <Button variant='outline'>Cancel</Button>
           </DialogClose>
-          <Button type='submit' form='user-invite-form'>
+          <Button
+            type='submit'
+            form='user-invite-form'
+            disabled={inviteUser.isPending}
+          >
             Invite <Send />
           </Button>
         </DialogFooter>
