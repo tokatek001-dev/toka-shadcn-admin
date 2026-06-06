@@ -75,7 +75,7 @@ This repo ships a multi-agent pipeline (Designer → Frontend → QA) defined in
 
 - **Designer** is read-only; outputs a JSON spec (route, components, data model, states, acceptance criteria).
 - **Frontend** must satisfy `pnpm lint && pnpm build` before handing off.
-- **QA** spawns `pnpm dev` and drives Playwright via MCP (`mcp__plugin_ecc_playwright__*`); failures loop back to Frontend, max 2 retries.
+- **QA** spawns `pnpm dev` and drives Playwright via MCP (`mcp__plugin_playwright_playwright__*`); failures loop back to Frontend, max 2 retries.
 - Auth-gated QA needs `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` in `.env.local` (Supabase test user).
 - Per-run artifacts in `.claude/runs/<run-id>/` (gitignored): `spec.json`, `impl-<n>.json`, `qa-<n>.json`, `screenshots/`.
 

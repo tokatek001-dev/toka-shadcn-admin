@@ -170,7 +170,7 @@ A multi-agent pipeline that turns a feature brief or a Figma URL into a working,
 
 ### Requirements
 
-- Playwright MCP server connected (`mcp__plugin_ecc_playwright__*`).
+- Playwright MCP server connected (`mcp__plugin_playwright_playwright__*`).
 - Figma MCP server connected if passing Figma URLs (`mcp__claude_ai_Figma__*`).
 - For auth-gated features: `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` set in `.env.local` (Supabase test user).
 

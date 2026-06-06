@@ -165,7 +165,7 @@ ${JSON.stringify(impl, null, 2)}
 
 Procedure:
 1. Start the dev server: use the Bash tool with run_in_background: true, command: "${impl.devServerCommand || 'pnpm dev'}". Save the shell_id.
-2. Poll readiness: call mcp__plugin_ecc_playwright__browser_navigate to "${impl.testTargetUrl}". If it fails with connection refused, wait 2s and retry. Cap at 15 retries (~30s). If still failing, fail the run with a clear error and skip remaining steps.
+2. Poll readiness: call mcp__plugin_playwright_playwright__browser_navigate to "${impl.testTargetUrl}". If it fails with connection refused, wait 2s and retry. Cap at 15 retries (~30s). If still failing, fail the run with a clear error and skip remaining steps.
 3. If the route is auth-gated, sign in first: navigate to /sign-in, fill the email and password inputs with the values of env vars E2E_TEST_EMAIL and E2E_TEST_PASSWORD (read via Bash: echo \$E2E_TEST_EMAIL), then submit. If those env vars are unset, record this as a skipped criterion rather than a failure.
 4. For each acceptance criterion: navigate, interact (browser_click / browser_type / browser_fill_form), call browser_snapshot for the assertion, and record a screenshot via browser_take_screenshot into .claude/runs/<run-id>/screenshots/ (mkdir -p first; <run-id> is a short timestamp like 20260605-143022).
 5. After each step, call browser_console_messages. Any "error" level message means consoleErrors gets it appended; that fails the criterion.
