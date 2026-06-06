@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import {
   PART_TEST_SELECT,
   partTestRowsSchema,
+  sortableEntryColumns,
   type PartTest,
 } from '../data/schema'
 
@@ -14,10 +15,18 @@ export type PartTestsFilters = {
   document_status?: string[]
 }
 
+export type EntrySorting = {
+  id: string
+  desc: boolean
+}
+
+const DEFAULT_SORTING: EntrySorting = { id: 'updated_at', desc: true }
+
 type UsePartTestsDataParams = {
   pageIndex: number
   pageSize: number
   filters: PartTestsFilters
+  sorting?: EntrySorting
 }
 
 export const partTestsKeys = {
@@ -35,14 +44,21 @@ async function fetchPartTests({
   pageIndex,
   pageSize,
   filters,
+  sorting = DEFAULT_SORTING,
 }: UsePartTestsDataParams): Promise<PartTestsQueryResult> {
   const from = pageIndex * pageSize
   const to = from + pageSize - 1
 
+  const sortColumn = (sortableEntryColumns as readonly string[]).includes(
+    sorting.id
+  )
+    ? sorting.id
+    : DEFAULT_SORTING.id
+
   let query = supabase
     .from('data_entry_part_test')
     .select(PART_TEST_SELECT, { count: 'exact' })
-    .order('updated_at', { ascending: false })
+    .order(sortColumn, { ascending: !sorting.desc })
     .range(from, to)
 
   if (filters.name && filters.name.trim() !== '') {
