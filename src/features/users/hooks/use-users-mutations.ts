@@ -73,11 +73,18 @@ export function useDeleteUsers() {
   const invalidate = useInvalidateUsers()
   return useMutation({
     mutationFn: async (userIds: string[]) => {
-      await Promise.all(
+      const results = await Promise.allSettled(
         userIds.map((userId) => invokeAdminUsers({ action: 'delete', userId }))
       )
+      const failed = results.filter((r) => r.status === 'rejected')
+      if (failed.length > 0) {
+        throw new Error(
+          `Failed to delete ${failed.length} of ${userIds.length} users`
+        )
+      }
     },
-    onSuccess: invalidate,
+    // Invalidate even on failure: some deletions may have succeeded.
+    onSettled: invalidate,
   })
 }
 

@@ -18,7 +18,11 @@ export function handleServerError(error: unknown) {
     errMsg = 'No content.'
   }
 
-  if (error instanceof Error && error.message) {
+  if (
+    error instanceof Error &&
+    !(error instanceof AxiosError) &&
+    error.message
+  ) {
     errMsg = error.message
   }
 
