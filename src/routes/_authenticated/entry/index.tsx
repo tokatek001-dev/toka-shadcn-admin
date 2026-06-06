@@ -19,6 +19,10 @@ const entrySearchSchema = z.object({
   level: z.array(z.string()).optional().catch([]),
   parent_test_type: z.array(z.string()).optional().catch([]),
   document_status: z.array(z.string()).optional().catch([]),
+  // Server-side sorting; invalid values fall back to updated_at desc in the
+  // table layer (allowedColumns whitelist).
+  sortBy: z.string().optional().catch(undefined),
+  sortDesc: z.boolean().optional().catch(undefined),
 })
 
 export const Route = createFileRoute('/_authenticated/entry/')({
