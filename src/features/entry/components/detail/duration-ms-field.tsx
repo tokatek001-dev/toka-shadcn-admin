@@ -10,8 +10,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { formatDuration } from '../../data/format'
 
-type DurationMsFieldProps<T extends FieldValues> = {
-  control: Control<T>
+// TT (transformed values) is left open so forms whose zod schema transforms
+// inputs (e.g. string → number | null) type-check when passing `form.control`.
+type DurationMsFieldProps<T extends FieldValues, TT extends FieldValues = T> = {
+  control: Control<T, unknown, TT>
   name: FieldPath<T>
   label: string
   disabled?: boolean
@@ -21,15 +23,13 @@ type DurationMsFieldProps<T extends FieldValues> = {
  * Millisecond input with a live mm:ss hint — `duration_in_second`/`audio_time`
  * store MILLISECONDS despite their names.
  */
-export function DurationMsField<T extends FieldValues>({
-  control,
-  name,
-  label,
-  disabled,
-}: DurationMsFieldProps<T>) {
+export function DurationMsField<
+  T extends FieldValues,
+  TT extends FieldValues = T,
+>({ control, name, label, disabled }: DurationMsFieldProps<T, TT>) {
   return (
     <FormField
-      control={control}
+      control={control as unknown as Control<T>}
       name={name}
       render={({ field }) => {
         const ms = /^\d+$/.test(String(field.value ?? '').trim())
