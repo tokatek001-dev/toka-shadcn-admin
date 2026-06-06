@@ -71,7 +71,7 @@ export function EntryMediaSection({ items }: EntryMediaSectionProps) {
                       <Button
                         variant='outline'
                         size='sm'
-                        disabled={!isUploadConfigured}
+                        disabled={!isUploadConfigured()}
                       >
                         Replace
                       </Button>

@@ -24,6 +24,7 @@ describe('EntryMediaSection', () => {
   })
 
   it('renders a no-file placeholder and a disabled Replace button', async () => {
+    vi.stubEnv('VITE_UPLOAD_API_URL', '')
     const { container, getByRole } = await render(
       <EntryMediaSection
         items={[{ label: 'Cover', media: null, kind: 'image' }]}
