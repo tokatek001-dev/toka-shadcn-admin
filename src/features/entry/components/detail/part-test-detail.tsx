@@ -264,10 +264,29 @@ function PartTestForm({ row }: { row: PartTestRow }) {
           </Card>
 
           <EntryMediaSection
+            canEdit={canEdit && !updateTest.isPending}
             items={[
-              { label: 'Cover', media: row.cover, kind: 'image' },
-              { label: 'Example image', media: row.ex_image, kind: 'image' },
-              { label: 'Audio', media: row.audio, kind: 'file' },
+              {
+                label: 'Cover',
+                media: form.watch('cover') ?? undefined,
+                kind: 'image',
+                onReplaced: (m) =>
+                  form.setValue('cover', m, { shouldDirty: true }),
+              },
+              {
+                label: 'Example image',
+                media: form.watch('ex_image') ?? undefined,
+                kind: 'image',
+                onReplaced: (m) =>
+                  form.setValue('ex_image', m, { shouldDirty: true }),
+              },
+              {
+                label: 'Audio',
+                media: form.watch('audio') ?? undefined,
+                kind: 'file',
+                onReplaced: (m) =>
+                  form.setValue('audio', m, { shouldDirty: true }),
+              },
             ]}
           />
         </form>
