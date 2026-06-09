@@ -8,6 +8,7 @@ const config: KnipConfig = {
     // Deno edge functions are deployed to Supabase, not bundled by Vite.
     'supabase/functions/**',
   ],
+  ignoreExportsUsedInFile: true,
 }
 
 export default config

@@ -64,7 +64,9 @@ describe('serializeExplanation', () => {
   })
 
   it('serializes an empty document to null', () => {
-    expect(serializeExplanation([{ type: 'p', children: [{ text: '' }] }])).toBeNull()
+    expect(
+      serializeExplanation([{ type: 'p', children: [{ text: '' }] }])
+    ).toBeNull()
     expect(
       serializeExplanation([
         { type: 'p', children: [{ text: '  ' }] },
@@ -75,6 +77,8 @@ describe('serializeExplanation', () => {
 
   it('upgrades a plain string to Plate JSON', () => {
     const out = serializeExplanation(parseExplanation('plain'))
-    expect(out).toBe(JSON.stringify([{ type: 'p', children: [{ text: 'plain' }] }]))
+    expect(out).toBe(
+      JSON.stringify([{ type: 'p', children: [{ text: 'plain' }] }])
+    )
   })
 })

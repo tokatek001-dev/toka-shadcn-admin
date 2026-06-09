@@ -17,7 +17,10 @@ const makeEditor = (children: Descendant[]) => {
   return editor
 }
 
-const selectAllOfFirstText = (editor: ReturnType<typeof createEditor>, len: number) =>
+const selectAllOfFirstText = (
+  editor: ReturnType<typeof createEditor>,
+  len: number
+) =>
   Transforms.select(editor, {
     anchor: { path: [0, 0], offset: 0 },
     focus: { path: [0, 0], offset: len },
@@ -25,7 +28,9 @@ const selectAllOfFirstText = (editor: ReturnType<typeof createEditor>, len: numb
 
 describe('marks', () => {
   it('toggleMark adds and removes bold on the selection', () => {
-    const editor = makeEditor([{ type: 'p', children: [{ text: 'hello world' }] }])
+    const editor = makeEditor([
+      { type: 'p', children: [{ text: 'hello world' }] },
+    ])
     selectAllOfFirstText(editor, 5)
     toggleMark(editor, 'bold')
     expect(editor.children).toEqual([
@@ -47,7 +52,9 @@ describe('marks', () => {
       { type: 'p', children: [{ text: 'màu', colorKey: 'blue100' }] },
     ])
     clearMark(editor, 'colorKey')
-    expect(editor.children).toEqual([{ type: 'p', children: [{ text: 'màu' }] }])
+    expect(editor.children).toEqual([
+      { type: 'p', children: [{ text: 'màu' }] },
+    ])
   })
 
   it('leaves unknown marks on untouched text alone', () => {
@@ -94,13 +101,18 @@ describe('blocks', () => {
       {
         type: 'ul',
         children: [
-          { type: 'li', children: [{ type: 'p', children: [{ text: 'item' }] }] },
+          {
+            type: 'li',
+            children: [{ type: 'p', children: [{ text: 'item' }] }],
+          },
         ],
       },
     ])
     expect(isBlockActive(editor, 'ul')).toBe(true)
     toggleList(editor, 'ul')
-    expect(editor.children).toEqual([{ type: 'p', children: [{ text: 'item' }] }])
+    expect(editor.children).toEqual([
+      { type: 'p', children: [{ text: 'item' }] },
+    ])
   })
 
   it('switching ul → ol rewraps instead of nesting', () => {
@@ -113,7 +125,10 @@ describe('blocks', () => {
       {
         type: 'ol',
         children: [
-          { type: 'li', children: [{ type: 'p', children: [{ text: 'item' }] }] },
+          {
+            type: 'li',
+            children: [{ type: 'p', children: [{ text: 'item' }] }],
+          },
         ],
       },
     ])
@@ -125,8 +140,14 @@ describe('blocks', () => {
       {
         type: 'ul',
         children: [
-          { type: 'li', children: [{ type: 'p', children: [{ text: 'first' }] }] },
-          { type: 'li', children: [{ type: 'p', children: [{ text: 'second' }] }] },
+          {
+            type: 'li',
+            children: [{ type: 'p', children: [{ text: 'first' }] }],
+          },
+          {
+            type: 'li',
+            children: [{ type: 'p', children: [{ text: 'second' }] }],
+          },
         ],
       },
     ])
@@ -140,8 +161,14 @@ describe('blocks', () => {
       {
         type: 'ol',
         children: [
-          { type: 'li', children: [{ type: 'p', children: [{ text: 'first' }] }] },
-          { type: 'li', children: [{ type: 'p', children: [{ text: 'second' }] }] },
+          {
+            type: 'li',
+            children: [{ type: 'p', children: [{ text: 'first' }] }],
+          },
+          {
+            type: 'li',
+            children: [{ type: 'p', children: [{ text: 'second' }] }],
+          },
         ],
       },
     ])
@@ -153,8 +180,14 @@ describe('blocks', () => {
       {
         type: 'ul',
         children: [
-          { type: 'li', children: [{ type: 'p', children: [{ text: 'first' }] }] },
-          { type: 'li', children: [{ type: 'p', children: [{ text: 'second' }] }] },
+          {
+            type: 'li',
+            children: [{ type: 'p', children: [{ text: 'first' }] }],
+          },
+          {
+            type: 'li',
+            children: [{ type: 'p', children: [{ text: 'second' }] }],
+          },
         ],
       },
     ])
@@ -179,7 +212,9 @@ describe('blocks', () => {
         children: [{ type: 'p', children: [{ text: 'inside' }] }],
       },
     ]
-    const editor = makeEditor(JSON.parse(JSON.stringify(fixture)) as Descendant[])
+    const editor = makeEditor(
+      JSON.parse(JSON.stringify(fixture)) as Descendant[]
+    )
     // Select from start of [0] text to start of [1,0] text — spans two different parents.
     Transforms.select(editor, {
       anchor: { path: [0, 0], offset: 0 },

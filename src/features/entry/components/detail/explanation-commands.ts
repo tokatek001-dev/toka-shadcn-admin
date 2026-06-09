@@ -65,15 +65,26 @@ export function toggleList(editor: Editor, type: 'ul' | 'ol') {
   const active = isBlockActive(editor, type)
 
   // Lift out of any current list (li first, then the ul/ol wrapper).
-  Transforms.unwrapNodes(editor, { at: rawAt, match: isType(['li']), split: true })
-  Transforms.unwrapNodes(editor, { at: rawAt, match: isType(LIST_TYPES), split: true })
+  Transforms.unwrapNodes(editor, {
+    at: rawAt,
+    match: isType(['li']),
+    split: true,
+  })
+  Transforms.unwrapNodes(editor, {
+    at: rawAt,
+    match: isType(LIST_TYPES),
+    split: true,
+  })
   if (active) return
 
   // Gather matched text blocks after the unwraps using the raw (post-mutation)
   // selection — do NOT use unhangRange here, so that blocks in different
   // containers are all visible and the parent guard can fire correctly.
   const blocks = Array.from(
-    Editor.nodes(editor, { at: editor.selection ?? undefined, match: isType(TEXT_BLOCK_TYPES) })
+    Editor.nodes(editor, {
+      at: editor.selection ?? undefined,
+      match: isType(TEXT_BLOCK_TYPES),
+    })
   )
   // Guard: all gathered blocks must share the same immediate parent.
   // Checked AFTER unwraps so that a coming-from-list selection (items in
@@ -107,5 +118,9 @@ export function toggleList(editor: Editor, type: 'ul' | 'ol') {
           focus: { path: [...lastPath, 0], offset: 0 },
         }
       : (editor.selection ?? undefined)
-  Transforms.wrapNodes(editor, { type, children: [] }, { at: wrapAt, match: isType(['li']) })
+  Transforms.wrapNodes(
+    editor,
+    { type, children: [] },
+    { at: wrapAt, match: isType(['li']) }
+  )
 }
