@@ -71,15 +71,7 @@ export function useSlotCandidates({
   search: string
 }) {
   const query = useQuery({
-    queryKey: [
-      'entry',
-      'child-candidates',
-      slot?.table,
-      slot?.testType,
-      slot?.part ?? null,
-      excludeId,
-      search,
-    ],
+    queryKey: ['entry', 'child-candidates', slot, excludeId, search],
     queryFn: () => fetchSlotCandidates(slot!, excludeId, search),
     enabled: slot != null,
   })
