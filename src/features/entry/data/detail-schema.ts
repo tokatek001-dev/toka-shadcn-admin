@@ -1,15 +1,26 @@
 import { z } from 'zod'
-import { mediaObjectSchema } from './schema'
+import { normalizeQuestionGroups } from './question-groups'
+import { mediaObjectSchema, type MediaObject } from './schema'
 
 export type EntryKind = 'part' | 'full'
 
 // ---------- DB row parsers (select('*')) ----------
 
-// Sidebar preview only reads titles/counts; questions stay opaque.
+// Loose group/question parse: the editor reads titles/passages/questions; all
+// other jsonb keys (transcripts, templates, flags, explanation) pass through.
 const questionGroupPreviewSchema = z.looseObject({
+  group_key: z.string().optional(),
   group_title: z.string().nullable().optional(),
   number_of_question: z.number().nullable().optional(),
-  questions: z.array(z.unknown()).nullable().optional(),
+  passage: z
+    .looseObject({
+      title: z.string().nullable().optional(),
+      body: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+  image: mediaObjectSchema.optional(),
+  questions: z.array(z.looseObject({})).nullable().optional(),
 })
 
 export const partTestDetailSchema = z.looseObject({
@@ -65,6 +76,42 @@ export const fullTestDetailSchema = z.looseObject({
 })
 export type FullTestDetail = z.infer<typeof fullTestDetailSchema>
 
+// ---------- editable question_groups (input == output, extras pass through) ----------
+
+const mediaField = z.custom<MediaObject>().nullable().optional()
+
+export const editableOptionSchema = z.looseObject({
+  text: z.string(),
+  option_id: z.string(),
+  is_correct: z.boolean(),
+})
+
+export const editableQuestionSchema = z
+  .looseObject({
+    question_key: z.string(),
+    question_text: z.string().trim().min(1, 'Question text is required'),
+    options: z.array(editableOptionSchema).min(2, 'At least 2 options required'),
+    image: mediaField,
+  })
+  .refine((q) => q.options.filter((o) => o.is_correct).length === 1, {
+    message: 'Chọn đúng một đáp án đúng',
+    path: ['options'],
+  })
+
+export const editableQuestionGroupSchema = z.looseObject({
+  group_key: z.string(),
+  group_title: z.string().nullable(),
+  passage: z
+    .looseObject({
+      title: z.string().nullable(),
+      body: z.string().nullable(),
+    })
+    .nullable(),
+  image: mediaField,
+  questions: z.array(editableQuestionSchema).min(1, 'Group cần ít nhất 1 câu hỏi'),
+})
+export type EditableQuestionGroup = z.infer<typeof editableQuestionGroupSchema>
+
 // ---------- form schemas (text inputs in, typed payload out) ----------
 
 // Numeric text input: '' → null, otherwise a nonnegative integer.
@@ -93,6 +140,10 @@ export const partTestFormSchema = z.object({
   content_access_type: z.string().trim().min(1, 'Access type is required'),
   base_source: z.string(),
   base_id: z.string(),
+  cover: z.custom<MediaObject>().nullable(),
+  ex_image: z.custom<MediaObject>().nullable(),
+  audio: z.custom<MediaObject>().nullable(),
+  question_groups: z.array(editableQuestionGroupSchema).nullable(),
 })
 export type PartTestFormInput = z.input<typeof partTestFormSchema>
 export type PartTestFormValues = z.output<typeof partTestFormSchema>
@@ -108,6 +159,7 @@ export const fullTestFormSchema = z.object({
   content_access_type: z.string().trim().min(1, 'Access type is required'),
   base_source: z.string(),
   base_id: z.string(),
+  cover: z.custom<MediaObject>().nullable(),
 })
 export type FullTestFormInput = z.input<typeof fullTestFormSchema>
 export type FullTestFormValues = z.output<typeof fullTestFormSchema>
@@ -135,7 +187,48 @@ export function toPartTestDefaults(row: PartTestDetail): PartTestFormInput {
     content_access_type: row.content_access_type,
     base_source: str(row.base_source),
     base_id: str(row.base_id),
-  }
+    cover: row.cover ?? null,
+    ex_image: row.ex_image ?? null,
+    audio: row.audio ?? null,
+    question_groups: row.question_groups
+      ? row.question_groups.map((g) => {
+          const group = g as Record<string, unknown>
+          const passage = group.passage as
+            | { title?: string | null; body?: string | null }
+            | null
+            | undefined
+          return {
+            ...group,
+            group_key: String(group.group_key ?? crypto.randomUUID()),
+            group_title: (group.group_title as string | null) ?? '',
+            passage: passage
+              ? {
+                  ...passage,
+                  title: passage.title ?? null,
+                  body: passage.body ?? null,
+                }
+              : { title: null, body: null },
+            image: (group.image as MediaObject) ?? null,
+            questions: ((group.questions as Array<Record<string, unknown>>) ?? []).map(
+              (q) => ({
+                ...q,
+                question_key: String(q.question_key ?? crypto.randomUUID()),
+                question_text: String(q.question_text ?? ''),
+                options: ((q.options as Array<Record<string, unknown>>) ?? []).map(
+                  (o) => ({
+                    ...o,
+                    text: String(o.text ?? ''),
+                    option_id: String(o.option_id ?? ''),
+                    is_correct: Boolean(o.is_correct),
+                  })
+                ),
+                image: (q.image as MediaObject) ?? null,
+              })
+            ),
+          }
+        })
+      : null,
+  } as PartTestFormInput
 }
 
 export function toFullTestDefaults(row: FullTestDetail): FullTestFormInput {
@@ -150,6 +243,7 @@ export function toFullTestDefaults(row: FullTestDetail): FullTestFormInput {
     content_access_type: str(row.content_access_type),
     base_source: str(row.base_source),
     base_id: str(row.base_id),
+    cover: row.cover ?? null,
   }
 }
 
@@ -158,7 +252,7 @@ export function toFullTestDefaults(row: FullTestDetail): FullTestFormInput {
 const orNull = (v: string) => (v.trim() === '' ? null : v)
 
 export function toPartTestPayload(values: PartTestFormValues) {
-  return {
+  const base = {
     name: values.name,
     part: values.part,
     test_type: values.test_type,
@@ -175,6 +269,29 @@ export function toPartTestPayload(values: PartTestFormValues) {
     content_access_type: values.content_access_type,
     base_source: orNull(values.base_source),
     base_id: orNull(values.base_id),
+    cover: values.cover,
+    ex_image: values.ex_image,
+    audio: values.audio,
+  }
+  if (!values.question_groups) return base
+  // Recompute orders/counts; total_question is derived from the groups.
+  const normalized = normalizeQuestionGroups(
+    values.question_groups.map((g) => ({
+      ...g,
+      group_title: g.group_title?.trim() === '' ? null : g.group_title,
+      passage: g.passage
+        ? {
+            ...g.passage,
+            title: g.passage.title?.trim() === '' ? null : g.passage.title,
+            body: g.passage.body?.trim() === '' ? null : g.passage.body,
+          }
+        : null,
+    }))
+  )
+  return {
+    ...base,
+    question_groups: normalized.groups,
+    total_question: normalized.totalQuestions,
   }
 }
 
@@ -190,5 +307,6 @@ export function toFullTestPayload(values: FullTestFormValues) {
     content_access_type: values.content_access_type,
     base_source: orNull(values.base_source),
     base_id: orNull(values.base_id),
+    cover: values.cover,
   }
 }

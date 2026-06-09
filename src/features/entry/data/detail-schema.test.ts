@@ -1,12 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import {
+  editableQuestionSchema,
   fullTestDetailSchema,
+  fullTestFormSchema,
   nullableIntString,
   partTestDetailSchema,
   partTestFormSchema,
+  toFullTestDefaults,
+  toFullTestPayload,
   toPartTestDefaults,
   toPartTestPayload,
 } from './detail-schema'
+
+// Three valid questions so the editable group schema accepts the fixture.
+const fixtureQuestion = (n: number) => ({
+  question_key: `q${n}`,
+  question_text: `Question ${n}?`,
+  options: [
+    { text: 'a', option_id: 'A', is_correct: n === 1 },
+    { text: 'b', option_id: 'B', is_correct: n !== 1 },
+  ],
+})
 
 const basePartRow = {
   id: 'c0a8666f-0000-0000-0000-000000000001',
@@ -30,7 +44,12 @@ const basePartRow = {
   knowledge_codes: null,
   transcript_characters: null,
   question_groups: [
-    { group_title: 'Group A', number_of_question: 3, questions: [{}, {}, {}] },
+    {
+      group_key: 'grp-a',
+      group_title: 'Group A',
+      number_of_question: 3,
+      questions: [fixtureQuestion(1), fixtureQuestion(2), fixtureQuestion(3)],
+    },
   ],
   reading_part: false,
   created_at: '2026-01-01T00:00:00Z',
@@ -120,5 +139,104 @@ describe('part form schema + mappers', () => {
     const row = partTestDetailSchema.parse(basePartRow)
     const defaults = { ...toPartTestDefaults(row), name: '  ' }
     expect(() => partTestFormSchema.parse(defaults)).toThrow()
+  })
+})
+
+describe('media + question_groups in the part form', () => {
+  it('defaults carry media objects and editable groups', () => {
+    const row = partTestDetailSchema.parse(basePartRow)
+    const defaults = toPartTestDefaults(row)
+    expect(defaults.cover).toMatchObject({ path: 'PUBLIC/MEDIA/c.png' })
+    expect(defaults.question_groups?.[0]?.questions?.[0]).toBeDefined()
+    expect(defaults.question_groups?.[0]?.group_title).toBe('Group A')
+  })
+
+  it('payload normalizes groups and derives total_question from them', () => {
+    const row = partTestDetailSchema.parse(basePartRow)
+    const defaults = toPartTestDefaults(row)
+    const values = partTestFormSchema.parse(defaults)
+    const payload = toPartTestPayload(values)
+    expect(payload.total_question).toBe(3) // 3 questions in the fixture group
+    expect(payload.cover).toMatchObject({ path: 'PUBLIC/MEDIA/c.png' })
+    const groups = (payload as Record<string, unknown>)
+      .question_groups as Array<Record<string, unknown>>
+    expect(groups[0].number_of_question).toBe(3)
+    expect(groups[0].order).toBe(0)
+  })
+
+  it('keeps manual total_question when question_groups is null', () => {
+    const row = partTestDetailSchema.parse({
+      ...basePartRow,
+      question_groups: null,
+    })
+    const values = partTestFormSchema.parse(toPartTestDefaults(row))
+    const payload = toPartTestPayload(values)
+    expect(payload.total_question).toBe(30)
+    expect(
+      (payload as Record<string, unknown>).question_groups
+    ).toBeUndefined()
+  })
+})
+
+describe('editableQuestionSchema validation', () => {
+  const validQ = {
+    question_key: 'k',
+    question_text: 'Q?',
+    options: [
+      { text: 'a', option_id: 'A', is_correct: true },
+      { text: 'b', option_id: 'B', is_correct: false },
+    ],
+  }
+
+  it('accepts a valid question', () => {
+    expect(() => editableQuestionSchema.parse(validQ)).not.toThrow()
+  })
+
+  it('rejects empty question_text, <2 options, and not-exactly-one correct', () => {
+    expect(() =>
+      editableQuestionSchema.parse({ ...validQ, question_text: ' ' })
+    ).toThrow()
+    expect(() =>
+      editableQuestionSchema.parse({ ...validQ, options: [validQ.options[0]] })
+    ).toThrow()
+    expect(() =>
+      editableQuestionSchema.parse({
+        ...validQ,
+        options: validQ.options.map((o) => ({ ...o, is_correct: false })),
+      })
+    ).toThrow()
+  })
+})
+
+describe('full form cover field', () => {
+  it('round-trips cover through defaults and payload', () => {
+    const row = fullTestDetailSchema.parse({
+      id: 'c0a8666f-0000-0000-0000-000000000002',
+      base_id: null,
+      name: 'Full Test 1',
+      test_type: 'FT',
+      level: 'TOEIC_600',
+      base_source: null,
+      cover: { name: 'ft.jpg', path: 'PUBLIC/MEDIA/ft.jpg' },
+      total_question: 200,
+      duration_in_second: 7200000,
+      document_status: 'DRAFT',
+      content_ids: null,
+      all_test_ids: ['a', 'b'],
+      created_at: null,
+      updated_at: null,
+      parent_test_type: 'SKILL_TEST',
+      content_access_type: 'FREE',
+      version: 1,
+      created_by: 'system',
+      updated_by: 'system',
+    })
+    const payload = toFullTestPayload(
+      fullTestFormSchema.parse(toFullTestDefaults(row))
+    )
+    expect(payload.cover).toMatchObject({
+      name: 'ft.jpg',
+      path: 'PUBLIC/MEDIA/ft.jpg',
+    })
   })
 })
