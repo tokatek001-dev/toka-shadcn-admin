@@ -1,5 +1,10 @@
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect, useState } from 'react'
+import {
+  type Control,
+  type FieldArrayPath,
+  useFieldArray,
+  useForm,
+} from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useCanGoBack, useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
@@ -14,6 +19,7 @@ import {
   type PartTestFormInput,
   type PartTestFormValues,
 } from '../../data/detail-schema'
+import { newGroup } from '../../data/question-groups'
 import {
   levelOptions,
   partDocumentStatusOptions,
@@ -33,6 +39,7 @@ import {
 import { DurationMsField } from './duration-ms-field'
 import { EntryDetailLayout } from './entry-detail-layout'
 import { EntryMediaSection } from './entry-media-section'
+import { GroupPanel, GroupsNav } from './question-group-editor'
 import { UnsavedChangesGuard } from './unsaved-changes-guard'
 
 const flagTypeOptions = [
@@ -68,9 +75,20 @@ function PartTestForm({ row }: { row: PartTestRow }) {
     defaultValues: toPartTestDefaults(row),
   })
 
+  // 'general' = the metadata/media sections; a number selects that group panel.
+  const [section, setSection] = useState<number | 'general'>('general')
+
+  const groupsArray = useFieldArray({
+    control: form.control as unknown as Control<PartTestFormInput>,
+    name: 'question_groups' as FieldArrayPath<PartTestFormInput>,
+  })
+  const watchedGroups = form.watch('question_groups')
+  const hasGroups = (watchedGroups?.length ?? 0) > 0
+
   // Re-sync after a save bumps version (query invalidation refetches the row).
   useEffect(() => {
     form.reset(toPartTestDefaults(row))
+    setSection('general')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row])
 
@@ -79,29 +97,51 @@ function PartTestForm({ row }: { row: PartTestRow }) {
     else void router.navigate({ to: '/entry' })
   }
 
+  const addGroup = () => {
+    const newIndex = watchedGroups?.length ?? 0
+    groupsArray.append(newGroup() as never)
+    setSection(newIndex)
+  }
+
+  const removeGroup = (i: number) => {
+    groupsArray.remove(i)
+    setSection('general')
+  }
+
   const save = (andFinish: boolean) =>
-    form.handleSubmit(async (values) => {
-      try {
-        await updateTest.mutateAsync({
-          id: row.id,
-          version: row.version,
-          payload: toPartTestPayload(values),
-        })
-        toast.success('Saved')
-        if (andFinish) goBack()
-      } catch (e) {
-        if (e instanceof ConflictError) {
-          toast.error(e.message, {
-            action: {
-              label: 'Reload',
-              onClick: () => window.location.reload(),
-            },
+    form.handleSubmit(
+      async (values) => {
+        try {
+          await updateTest.mutateAsync({
+            id: row.id,
+            version: row.version,
+            payload: toPartTestPayload(values),
           })
-        } else {
-          toast.error(e instanceof Error ? e.message : 'Save failed')
+          toast.success('Saved')
+          if (andFinish) goBack()
+        } catch (e) {
+          if (e instanceof ConflictError) {
+            toast.error(e.message, {
+              action: {
+                label: 'Reload',
+                onClick: () => window.location.reload(),
+              },
+            })
+          } else {
+            toast.error(e instanceof Error ? e.message : 'Save failed')
+          }
         }
+      },
+      (errors) => {
+        // Jump to the first group with a validation error so it's visible.
+        const groupErrors = errors.question_groups as
+          | Array<unknown>
+          | undefined
+        const idx = groupErrors?.findIndex((e) => e != null) ?? -1
+        if (idx >= 0) setSection(idx)
+        toast.error('Form có lỗi — kiểm tra các trường đánh dấu đỏ')
       }
-    })()
+    )()
 
   const disabled = !canEdit || updateTest.isPending
 
@@ -122,13 +162,26 @@ function PartTestForm({ row }: { row: PartTestRow }) {
       onBack={goBack}
       onSave={() => void save(false)}
       onSaveAndFinish={() => void save(true)}
-      sidebar={<GroupsSidebar row={row} />}
+      sidebar={
+        <GroupsNav
+          groups={watchedGroups ?? []}
+          selected={section}
+          onSelect={setSection}
+          onAddGroup={canEdit ? addGroup : undefined}
+          canEdit={canEdit}
+        />
+      }
     >
       <UnsavedChangesGuard
         when={form.formState.isDirty && !updateTest.isPending}
       />
       <Form {...form}>
         <form className='flex max-w-3xl flex-col gap-6'>
+          <div
+            className={
+              section === 'general' ? 'flex flex-col gap-6' : 'hidden'
+            }
+          >
           <Card>
             <CardHeader>
               <CardTitle>Basics</CardTitle>
@@ -177,12 +230,19 @@ function PartTestForm({ row }: { row: PartTestRow }) {
               <CardTitle>Numbers</CardTitle>
             </CardHeader>
             <CardContent className='grid gap-4 sm:grid-cols-2'>
-              <TextField
-                control={form.control}
-                name='total_question'
-                label='Total questions'
-                disabled={disabled}
-              />
+              <div className='flex flex-col gap-1'>
+                <TextField
+                  control={form.control}
+                  name='total_question'
+                  label='Total questions'
+                  disabled={disabled || hasGroups}
+                />
+                {hasGroups && (
+                  <span className='text-xs text-muted-foreground'>
+                    Tự tính từ question groups khi lưu
+                  </span>
+                )}
+              </div>
               <TextField
                 control={form.control}
                 name='start_part_order'
@@ -289,35 +349,18 @@ function PartTestForm({ row }: { row: PartTestRow }) {
               },
             ]}
           />
+          </div>
+
+          {typeof section === 'number' && watchedGroups?.[section] && (
+            <GroupPanel
+              form={form}
+              groupIndex={section}
+              disabled={disabled}
+              onRemoveGroup={canEdit ? () => removeGroup(section) : undefined}
+            />
+          )}
         </form>
       </Form>
     </EntryDetailLayout>
-  )
-}
-
-function GroupsSidebar({ row }: { row: PartTestRow }) {
-  const groups = row.question_groups ?? []
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className='text-base'>Question groups</CardTitle>
-      </CardHeader>
-      <CardContent className='flex flex-col gap-1 text-sm'>
-        {groups.length === 0 && (
-          <span className='text-muted-foreground'>No groups</span>
-        )}
-        {groups.map((g, i) => (
-          <div key={i} className='truncate text-muted-foreground'>
-            {g.group_title || `Group ${i + 1}`} —{' '}
-            {g.number_of_question ?? g.questions?.length ?? 0} câu
-          </div>
-        ))}
-        {groups.length > 0 && (
-          <span className='mt-2 text-xs text-muted-foreground'>
-            Chỉnh sửa nội dung câu hỏi ở phase sau
-          </span>
-        )}
-      </CardContent>
-    </Card>
   )
 }
