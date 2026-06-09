@@ -94,11 +94,22 @@ function MediaRow({ item, canEdit }: { item: MediaItem; canEdit: boolean }) {
   return (
     <div className='flex items-center gap-3'>
       {item.kind === 'image' && src ? (
-        <img
-          src={src}
-          alt={item.media?.name ?? ''}
-          className='size-16 rounded-md border object-cover'
-        />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <img
+              src={src}
+              alt={item.media?.name ?? ''}
+              className='size-16 cursor-zoom-in rounded-md border object-cover'
+            />
+          </TooltipTrigger>
+          <TooltipContent side='right' className='p-1'>
+            <img
+              src={src}
+              alt={item.media?.name ?? ''}
+              className='max-h-80 max-w-xs rounded object-contain'
+            />
+          </TooltipContent>
+        </Tooltip>
       ) : (
         <div className='flex size-16 items-center justify-center rounded-md border bg-muted'>
           {item.kind === 'image' ? (
