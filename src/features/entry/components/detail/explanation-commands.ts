@@ -58,38 +58,54 @@ export function setBlockType(editor: Editor, type: 'p' | 'h1' | 'h2' | 'h3') {
 
 export function toggleList(editor: Editor, type: 'ul' | 'ol') {
   const { selection } = editor
-  const at = selection ? Editor.unhangRange(editor, selection) : undefined
+  // Use the raw selection for unwraps so that a multi-item selection whose
+  // focus lands at offset-0 of the next block is not silently trimmed by
+  // unhangRange before the list nodes are processed.
+  const rawAt = selection ?? undefined
   const active = isBlockActive(editor, type)
 
-  // Guard: check for cross-container selection BEFORE any mutations.
-  // Use the raw (un-hung) selection so that a drag-to-start-of-next-block
-  // selection is fully represented. Then check whether all matched text blocks
-  // share the same immediate parent — if not, bail out to avoid corrupting
-  // unknown container nodes.
-  if (!active) {
-    const preBlocks = Array.from(
-      Editor.nodes(editor, { at: selection ?? undefined, match: isType(TEXT_BLOCK_TYPES) })
-    )
-    if (preBlocks.length > 0) {
-      const parentKey = (path: number[]) => JSON.stringify(path.slice(0, -1))
-      const firstParent = parentKey(preBlocks[0][1])
-      if (preBlocks.some(([, path]) => parentKey(path) !== firstParent)) return
-    }
-  }
-
   // Lift out of any current list (li first, then the ul/ol wrapper).
-  Transforms.unwrapNodes(editor, { at, match: isType(['li']), split: true })
-  Transforms.unwrapNodes(editor, { at, match: isType(LIST_TYPES), split: true })
+  Transforms.unwrapNodes(editor, { at: rawAt, match: isType(['li']), split: true })
+  Transforms.unwrapNodes(editor, { at: rawAt, match: isType(LIST_TYPES), split: true })
   if (active) return
-  // Gather matched text blocks after the unwraps.
+
+  // Gather matched text blocks after the unwraps using the raw (post-mutation)
+  // selection — do NOT use unhangRange here, so that blocks in different
+  // containers are all visible and the parent guard can fire correctly.
   const blocks = Array.from(
-    Editor.nodes(editor, { at, match: isType(TEXT_BLOCK_TYPES) })
+    Editor.nodes(editor, { at: editor.selection ?? undefined, match: isType(TEXT_BLOCK_TYPES) })
   )
+  // Guard: all gathered blocks must share the same immediate parent.
+  // Checked AFTER unwraps so that a coming-from-list selection (items in
+  // different li parents) sees the blocks as top-level siblings and passes.
+  // A cross-container selection with no lists involved will have had no-op
+  // unwraps and the blocks will still have different parents — bail without
+  // further mutation.
+  // (Known edge: selection spanning BOTH a list and a borderShading > p will
+  // un-list then bail — document is changed but never corrupted.)
+  if (blocks.length > 0) {
+    const parentKey = (path: number[]) => JSON.stringify(path.slice(0, -1))
+    const firstParent = parentKey(blocks[0][1])
+    if (blocks.some(([, path]) => parentKey(path) !== firstParent)) return
+  }
   // Wrap each selected text block in its own li (reverse order keeps the
-  // earlier paths stable).
-  for (const [, path] of blocks.reverse()) {
+  // earlier paths stable). Capture the original paths before any wrapping.
+  const originalPaths = blocks.map(([, p]) => p)
+  for (const path of [...originalPaths].reverse()) {
     Transforms.wrapNodes(editor, { type: 'li', children: [] }, { at: path })
   }
-  // Wrap all the resulting li nodes under one list element.
-  Transforms.wrapNodes(editor, { type, children: [] }, { at, match: isType(['li']) })
+  // Wrap all the resulting li nodes under one list element. Build a range
+  // spanning from the first to the last li path explicitly — this avoids
+  // unhangRange silently trimming a multi-block selection whose focus starts
+  // at offset-0 of the second block.
+  const firstPath = originalPaths[0]
+  const lastPath = originalPaths[originalPaths.length - 1]
+  const wrapAt =
+    firstPath && lastPath
+      ? {
+          anchor: { path: [...firstPath, 0], offset: 0 },
+          focus: { path: [...lastPath, 0], offset: 0 },
+        }
+      : (editor.selection ?? undefined)
+  Transforms.wrapNodes(editor, { type, children: [] }, { at: wrapAt, match: isType(['li']) })
 }

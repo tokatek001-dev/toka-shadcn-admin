@@ -119,6 +119,57 @@ describe('blocks', () => {
     ])
   })
 
+  it('multi-item ul → ol: switches both items into a single ol', () => {
+    // Fixture: ul with two li > p items.
+    const editor = makeEditor([
+      {
+        type: 'ul',
+        children: [
+          { type: 'li', children: [{ type: 'p', children: [{ text: 'first' }] }] },
+          { type: 'li', children: [{ type: 'p', children: [{ text: 'second' }] }] },
+        ],
+      },
+    ])
+    // Select from start of first item text to start of second item text.
+    Transforms.select(editor, {
+      anchor: { path: [0, 0, 0, 0], offset: 0 },
+      focus: { path: [0, 1, 0, 0], offset: 0 },
+    })
+    toggleList(editor, 'ol')
+    expect(editor.children).toEqual([
+      {
+        type: 'ol',
+        children: [
+          { type: 'li', children: [{ type: 'p', children: [{ text: 'first' }] }] },
+          { type: 'li', children: [{ type: 'p', children: [{ text: 'second' }] }] },
+        ],
+      },
+    ])
+  })
+
+  it('multi-item un-list: removes ul and produces two top-level p blocks', () => {
+    // Fixture: ul with two li > p items.
+    const editor = makeEditor([
+      {
+        type: 'ul',
+        children: [
+          { type: 'li', children: [{ type: 'p', children: [{ text: 'first' }] }] },
+          { type: 'li', children: [{ type: 'p', children: [{ text: 'second' }] }] },
+        ],
+      },
+    ])
+    // Select from start of first item text to start of second item text.
+    Transforms.select(editor, {
+      anchor: { path: [0, 0, 0, 0], offset: 0 },
+      focus: { path: [0, 1, 0, 0], offset: 0 },
+    })
+    toggleList(editor, 'ul')
+    expect(editor.children).toEqual([
+      { type: 'p', children: [{ text: 'first' }] },
+      { type: 'p', children: [{ text: 'second' }] },
+    ])
+  })
+
   it('toggleList is a no-op when selection spans a top-level p and a borderShading > p', () => {
     // Fixture: no lists, so the unwraps do nothing and "unchanged" is correct.
     const fixture: Descendant[] = [
