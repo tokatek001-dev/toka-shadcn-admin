@@ -204,10 +204,10 @@ export function toPartTestDefaults(row: PartTestDetail): PartTestFormInput {
             passage: passage
               ? {
                   ...passage,
-                  title: passage.title ?? null,
-                  body: passage.body ?? null,
+                  title: passage.title ?? '',
+                  body: passage.body ?? '',
                 }
-              : { title: null, body: null },
+              : { title: '', body: '' },
             image: (group.image as MediaObject) ?? null,
             questions: ((group.questions as Array<Record<string, unknown>>) ?? []).map(
               (q) => ({
