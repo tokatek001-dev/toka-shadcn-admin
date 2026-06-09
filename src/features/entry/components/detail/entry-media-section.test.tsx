@@ -49,6 +49,20 @@ describe('EntryMediaSection', () => {
       .toBeDisabled()
   })
 
+  it('renders Replace as type=button so it never submits the enclosing form', async () => {
+    const { getByRole } = await render(
+      <EntryMediaSection
+        canEdit
+        items={[
+          { label: 'Cover', media: null, kind: 'image', onReplaced: () => {} },
+        ]}
+      />
+    )
+    await expect
+      .element(getByRole('button', { name: /replace/i }))
+      .toHaveAttribute('type', 'button')
+  })
+
   it('uploads the picked file and calls onReplaced with a merged media object', async () => {
     uploadMediaMock.mockResolvedValue({
       path: 'entry/u-new.png',

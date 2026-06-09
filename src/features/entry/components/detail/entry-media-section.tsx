@@ -80,6 +80,7 @@ function MediaRow({ item, canEdit }: { item: MediaItem; canEdit: boolean }) {
 
   const button = (
     <Button
+      type='button'
       variant='outline'
       size='sm'
       disabled={!enabled}
