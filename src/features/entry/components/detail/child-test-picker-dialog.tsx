@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import { Check, Eye, Plus, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -40,11 +41,6 @@ type ChildTestPickerDialogProps = {
 
 const humanize = (v: string | null | undefined) =>
   v ? v.charAt(0) + v.slice(1).toLowerCase() : ''
-
-const detailHref = (slot: ChildSlot, id: string) =>
-  slot.table === 'data_entry_part_test'
-    ? `/entry/part-tests/${id}`
-    : `/entry/full-tests/${id}`
 
 export function ChildTestPickerDialog({
   open,
@@ -255,13 +251,15 @@ function CandidateRow({
             aria-label='Xem trước'
             asChild
           >
-            <a
-              href={detailHref(slot, item.id)}
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              <Eye className='size-4' />
-            </a>
+            {slot.table === 'data_entry_part_test' ? (
+              <Link to='/entry/part-tests/$id' params={{ id: item.id }}>
+                <Eye className='size-4' />
+              </Link>
+            ) : (
+              <Link to='/entry/full-tests/$id' params={{ id: item.id }}>
+                <Eye className='size-4' />
+              </Link>
+            )}
           </Button>
         </div>
       </TableCell>

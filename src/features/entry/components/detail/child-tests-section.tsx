@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import { Clock, Eye, ListChecks, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,11 +19,6 @@ import { ChildTestPickerDialog } from './child-test-picker-dialog'
 
 const humanize = (v: string | null | undefined) =>
   v ? v.charAt(0) + v.slice(1).toLowerCase() : ''
-
-const detailHref = (slot: ChildSlot, id: string) =>
-  slot.table === 'data_entry_part_test'
-    ? `/entry/part-tests/${id}`
-    : `/entry/full-tests/${id}`
 
 type ChildTestsSectionProps = {
   testType: string | null
@@ -158,13 +154,15 @@ function SlotCard({
                 aria-label='Xem trước'
                 asChild
               >
-                <a
-                  href={detailHref(slot, child.id)}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  <Eye className='size-4' />
-                </a>
+                {slot.table === 'data_entry_part_test' ? (
+                  <Link to='/entry/part-tests/$id' params={{ id: child.id }}>
+                    <Eye className='size-4' />
+                  </Link>
+                ) : (
+                  <Link to='/entry/full-tests/$id' params={{ id: child.id }}>
+                    <Eye className='size-4' />
+                  </Link>
+                )}
               </Button>
             </div>
           </div>

@@ -1,5 +1,35 @@
+import { type ReactElement } from 'react'
+import {
+  RouterProvider,
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from '@tanstack/react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
+
+// The eye/preview button is a router <Link>, so the component needs a router
+// context. Register the two detail routes its links target so hrefs resolve.
+function renderWithRouter(ui: ReactElement) {
+  const rootRoute = createRootRoute({ component: () => ui })
+  const partRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/entry/part-tests/$id',
+    component: () => null,
+  })
+  const fullRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/entry/full-tests/$id',
+    component: () => null,
+  })
+  const router = createRouter({
+    routeTree: rootRoute.addChildren([partRoute, fullRoute]),
+    history: createMemoryHistory({ initialEntries: ['/'] }),
+  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return render(<RouterProvider router={router as any} />)
+}
 
 const { resolved, candidates } = vi.hoisted(() => ({
   resolved: { data: [] as unknown[], isLoading: false },
@@ -41,7 +71,7 @@ beforeEach(() => {
 
 describe('ChildTestsSection', () => {
   it('renders a slot per part, filling resolved children and leaving the rest empty', async () => {
-    const screen = await render(
+    const screen = await renderWithRouter(
       <ChildTestsSection
         testType='FTL'
         excludeId='self'
@@ -68,7 +98,7 @@ describe('ChildTestsSection', () => {
   it('picking a test for an empty slot emits ordered all_test_ids', async () => {
     candidates.data = [test('p3', 'PART_3', 'L Test - Part 3', 39, 1164000)]
     const onChange = vi.fn()
-    const screen = await render(
+    const screen = await renderWithRouter(
       <ChildTestsSection
         testType='FTL'
         excludeId='self'

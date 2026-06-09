@@ -1,6 +1,36 @@
+import { type ReactElement } from 'react'
+import {
+  RouterProvider,
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from '@tanstack/react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { childSlots } from '../../data/child-test-slots'
+
+// The preview button is a router <Link>, so the dialog needs a router context.
+// Register the detail routes its links target so hrefs resolve.
+function renderWithRouter(ui: ReactElement) {
+  const rootRoute = createRootRoute({ component: () => ui })
+  const partRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/entry/part-tests/$id',
+    component: () => null,
+  })
+  const fullRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/entry/full-tests/$id',
+    component: () => null,
+  })
+  const router = createRouter({
+    routeTree: rootRoute.addChildren([partRoute, fullRoute]),
+    history: createMemoryHistory({ initialEntries: ['/'] }),
+  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return render(<RouterProvider router={router as any} />)
+}
 
 const { candidatesState } = vi.hoisted(() => ({
   candidatesState: {
@@ -40,7 +70,7 @@ beforeEach(() => {
 describe('ChildTestPickerDialog', () => {
   it('lists candidates and confirms the picked id (single-select)', async () => {
     const onConfirm = vi.fn()
-    const { getByText, getByRole } = await render(
+    const { getByText, getByRole } = await renderWithRouter(
       <ChildTestPickerDialog
         open
         onOpenChange={() => {}}
@@ -61,7 +91,7 @@ describe('ChildTestPickerDialog', () => {
   })
 
   it('preview link targets the part-test detail route', async () => {
-    const { getByRole } = await render(
+    const { getByRole } = await renderWithRouter(
       <ChildTestPickerDialog
         open
         onOpenChange={() => {}}
@@ -73,6 +103,5 @@ describe('ChildTestPickerDialog', () => {
     )
     const preview = getByRole('link', { name: /xem trước/i }).first()
     await expect.element(preview).toHaveAttribute('href', '/entry/part-tests/1')
-    await expect.element(preview).toHaveAttribute('target', '_blank')
   })
 })
