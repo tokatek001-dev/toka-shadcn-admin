@@ -39,8 +39,40 @@ describe('joinMediaUrl', () => {
 describe('mediaUrl', () => {
   it('resolves against VITE_MEDIA_BASE_URL from the environment', () => {
     vi.stubEnv('VITE_MEDIA_BASE_URL', 'https://cdn.test/')
+    vi.stubEnv('VITE_MEDIA_R2_BASE_URL', 'https://r2-unused.test/')
     expect(mediaUrl('PUBLIC/MEDIA/a.png')).toBe(
       'https://cdn.test/PUBLIC/MEDIA/a.png'
     )
+  })
+})
+
+describe('mediaUrl dual-CDN resolution', () => {
+  it('routes PUBLIC/ paths to the legacy CDN base', () => {
+    vi.stubEnv('VITE_MEDIA_BASE_URL', 'https://legacy.test/')
+    vi.stubEnv('VITE_MEDIA_R2_BASE_URL', 'https://r2.test/')
+    expect(mediaUrl('PUBLIC/MEDIA/a.png')).toBe(
+      'https://legacy.test/PUBLIC/MEDIA/a.png'
+    )
+  })
+
+  it('routes bare paths to the R2 CDN base', () => {
+    vi.stubEnv('VITE_MEDIA_BASE_URL', 'https://legacy.test/')
+    vi.stubEnv('VITE_MEDIA_R2_BASE_URL', 'https://r2.test/')
+    expect(mediaUrl('entry/uuid-a.png')).toBe(
+      'https://r2.test/entry/uuid-a.png'
+    )
+  })
+
+  it('passes through absolute URLs unchanged', () => {
+    vi.stubEnv('VITE_MEDIA_R2_BASE_URL', 'https://r2.test/')
+    expect(mediaUrl('https://elsewhere.test/x.png')).toBe(
+      'https://elsewhere.test/x.png'
+    )
+  })
+
+  it('returns null for bare paths when the R2 base is missing', () => {
+    vi.stubEnv('VITE_MEDIA_BASE_URL', 'https://legacy.test/')
+    vi.stubEnv('VITE_MEDIA_R2_BASE_URL', '')
+    expect(mediaUrl('entry/uuid-a.png')).toBeNull()
   })
 })

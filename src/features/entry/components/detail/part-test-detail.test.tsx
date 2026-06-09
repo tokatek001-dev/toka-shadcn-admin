@@ -86,7 +86,19 @@ const row: PartTestRow = {
   directions: null,
   ex_description: null,
   question_groups: [
-    { group_title: 'Group A', number_of_question: 3, questions: [] },
+    {
+      group_key: 'grp-a',
+      group_title: 'Group A',
+      number_of_question: 3,
+      questions: [1, 2, 3].map((n) => ({
+        question_key: `q${n}`,
+        question_text: `Question ${n}?`,
+        options: [
+          { text: 'a', option_id: 'A', is_correct: n === 1 },
+          { text: 'b', option_id: 'B', is_correct: n !== 1 },
+        ],
+      })),
+    },
   ],
   created_at: null,
   updated_at: null,
@@ -110,13 +122,24 @@ describe('PartTestDetail', () => {
   })
 
   it('renders the loaded row for an admin', async () => {
-    const { getByLabelText, getByText } = await render(
+    const { getByLabelText } = await render(<PartTestDetail id='x' />)
+
+    await expect.element(getByLabelText(/^name$/i)).toHaveValue('ETS Part 4')
+    await expect.element(getByLabelText(/directions/i)).toBeInTheDocument()
+  })
+
+  it('switches to a group panel from the nav and shows its questions', async () => {
+    const { getByRole, getByLabelText } = await render(
       <PartTestDetail id='x' />
     )
 
-    await expect.element(getByLabelText(/^name$/i)).toHaveValue('ETS Part 4')
-    await expect.element(getByText('Group A — 3 câu')).toBeInTheDocument()
-    await expect.element(getByLabelText(/directions/i)).toBeInTheDocument()
+    const navButton = getByRole('button', { name: /group a.*3 câu/i })
+    await expect.element(navButton).toBeInTheDocument()
+    await navButton.click()
+
+    await expect
+      .element(getByLabelText(/question text/i).first())
+      .toHaveValue('Question 1?')
   })
 
   it('disables Save while the form is pristine', async () => {

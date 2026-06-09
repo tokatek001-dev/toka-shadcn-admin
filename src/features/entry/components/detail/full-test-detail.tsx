@@ -223,7 +223,16 @@ function FullTestForm({ row }: { row: FullTestRow }) {
           </Card>
 
           <EntryMediaSection
-            items={[{ label: 'Cover', media: row.cover, kind: 'image' }]}
+            canEdit={canEdit && !updateTest.isPending}
+            items={[
+              {
+                label: 'Cover',
+                media: form.watch('cover') ?? undefined,
+                kind: 'image',
+                onReplaced: (m) =>
+                  form.setValue('cover', m, { shouldDirty: true }),
+              },
+            ]}
           />
         </form>
       </Form>
