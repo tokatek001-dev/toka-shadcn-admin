@@ -134,4 +134,21 @@ describe('ExplanationEditorDialog', () => {
     await screen2.getByRole('button', { name: /huỷ/i }).click()
     expect(saved).toBe('sentinel')
   })
+
+  it('wraps the paragraph in a bullet list via the toolbar', async () => {
+    let saved: string | null | undefined
+    const screen = await render(
+      <Harness
+        initial={JSON.stringify([{ type: 'p', children: [{ text: 'abc' }] }])}
+        onSave={(v) => (saved = v)}
+      />
+    )
+    const editable = screen.getByRole('textbox', { name: /explanation/i })
+    await editable.click()
+    await userEvent.keyboard('{ControlOrMeta>}a{/ControlOrMeta}')
+    await screen.getByRole('button', { name: /bullet list/i }).click()
+    await screen.getByRole('button', { name: /^lưu$/i }).click()
+    expect(saved).toContain('"type":"ul"')
+    expect(saved).toContain('"type":"li"')
+  })
 })

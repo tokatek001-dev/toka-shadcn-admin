@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { userEvent } from '@vitest/browser/context'
 import { describe, expect, it } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { Form } from '@/components/ui/form'
@@ -108,5 +109,23 @@ describe('question-group-editor', () => {
     await getByRole('button', { name: /thêm câu hỏi/i }).click()
     await expect.element(getByText('Câu 2')).toBeInTheDocument()
     await expect.element(getByText(/2 câu/)).toBeInTheDocument()
+  })
+
+  it('edits the explanation through the dialog and updates the preview', async () => {
+    const groups = oneGroup()
+    groups[0].questions[0] = {
+      ...groups[0].questions[0],
+      explanation: JSON.stringify([
+        { type: 'p', children: [{ text: 'giải thích cũ', bold: true }] },
+      ]),
+    }
+    const { getByRole, getByText } = await render(<Harness groups={groups} />)
+    await getByRole('button', { name: /sửa explanation/i }).click()
+    const editable = getByRole('textbox', { name: /explanation editor/i })
+    await editable.click()
+    await userEvent.keyboard(' thêm')
+    await getByRole('button', { name: /^lưu$/i }).click()
+    // dialog closed, preview (plateToText) shows the new text
+    await expect.element(getByText(/thêm/)).toBeInTheDocument()
   })
 })

@@ -31,12 +31,9 @@ import {
 import { type MediaObject } from '../../data/schema'
 import { TextField, TextareaField } from './detail-fields'
 import { EntryMediaSection } from './entry-media-section'
+import { ExplanationEditorDialog } from './explanation-editor-dialog'
 
-type PartForm = UseFormReturn<
-  PartTestFormInput,
-  unknown,
-  PartTestFormValues
->
+type PartForm = UseFormReturn<PartTestFormInput, unknown, PartTestFormValues>
 
 // All field paths below are dynamic (`question_groups.${i}...`); RHF's typed
 // paths can't model them through the nullable groups array, so we cast the
@@ -249,6 +246,7 @@ function QuestionCard({
 }) {
   const control = asControl(form)
   const base = `question_groups.${groupIndex}.questions.${questionIndex}`
+  const [editingExplanation, setEditingExplanation] = useState(false)
   const question = useWatch({ control, name: path(base) }) as
     | Record<string, unknown>
     | undefined
@@ -310,15 +308,37 @@ function QuestionCard({
         )}
 
         <div className='flex flex-col gap-1'>
-          <Label className='text-muted-foreground'>Explanation</Label>
+          <div className='flex items-center justify-between'>
+            <Label className='text-muted-foreground'>Explanation</Label>
+            {!disabled && (
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                aria-label='Sửa explanation'
+                onClick={() => setEditingExplanation(true)}
+              >
+                Sửa
+              </Button>
+            )}
+          </div>
           <div className='max-h-32 overflow-auto rounded-md border bg-muted/40 p-2 text-sm whitespace-pre-line'>
             {explanation || (
               <span className='text-muted-foreground italic'>—</span>
             )}
           </div>
-          <span className='text-xs text-muted-foreground italic'>
-            Chỉnh sửa explanation ở phase sau
-          </span>
+          {editingExplanation && (
+            <ExplanationEditorDialog
+              open={editingExplanation}
+              onOpenChange={setEditingExplanation}
+              value={(question?.explanation as string | null) ?? null}
+              onSave={(s) =>
+                form.setValue(path(`${base}.explanation`), s as never, {
+                  shouldDirty: true,
+                })
+              }
+            />
+          )}
         </div>
       </CardContent>
     </Card>
