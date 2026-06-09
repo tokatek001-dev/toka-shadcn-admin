@@ -164,6 +164,7 @@ export const fullTestFormSchema = z.object({
   base_source: z.string(),
   base_id: z.string(),
   cover: z.custom<MediaObject>().nullable(),
+  all_test_ids: z.array(z.string()),
 })
 export type FullTestFormInput = z.input<typeof fullTestFormSchema>
 export type FullTestFormValues = z.output<typeof fullTestFormSchema>
@@ -248,6 +249,7 @@ export function toFullTestDefaults(row: FullTestDetail): FullTestFormInput {
     base_source: str(row.base_source),
     base_id: str(row.base_id),
     cover: row.cover ?? null,
+    all_test_ids: row.all_test_ids ?? [],
   }
 }
 
@@ -312,5 +314,6 @@ export function toFullTestPayload(values: FullTestFormValues) {
     base_source: orNull(values.base_source),
     base_id: orNull(values.base_id),
     cover: values.cover,
+    all_test_ids: values.all_test_ids,
   }
 }
