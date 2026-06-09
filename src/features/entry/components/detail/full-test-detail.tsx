@@ -29,6 +29,7 @@ import {
   SelectField,
   TextField,
 } from './detail-fields'
+import { ChildTestsSection } from './child-tests-section'
 import { DurationMsField } from './duration-ms-field'
 import { EntryDetailLayout } from './entry-detail-layout'
 import { EntryMediaSection } from './entry-media-section'
@@ -98,8 +99,6 @@ function FullTestForm({ row }: { row: FullTestRow }) {
     })()
 
   const disabled = !canEdit || updateTest.isPending
-
-  const childCount = row.all_test_ids?.length ?? 0
 
   return (
     <EntryDetailLayout
@@ -213,14 +212,15 @@ function FullTestForm({ row }: { row: FullTestRow }) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Child tests</CardTitle>
-            </CardHeader>
-            <CardContent className='text-sm text-muted-foreground'>
-              {childCount} bài test con — chỉnh sửa ở phase sau
-            </CardContent>
-          </Card>
+          <ChildTestsSection
+            testType={row.test_type}
+            excludeId={row.id}
+            childIds={form.watch('all_test_ids') ?? []}
+            disabled={disabled}
+            onChange={(ids) =>
+              form.setValue('all_test_ids', ids, { shouldDirty: true })
+            }
+          />
 
           <EntryMediaSection
             canEdit={canEdit && !updateTest.isPending}
