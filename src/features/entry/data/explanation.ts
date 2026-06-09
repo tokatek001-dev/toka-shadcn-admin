@@ -7,13 +7,13 @@ import type { ReactEditor } from 'slate-react'
 
 // Loose node shapes: unknown properties (formula, iconKey, TEXT_COLOR, ids…)
 // ride along verbatim.
-export type ExplanationElement = {
+type ExplanationElement = {
   type?: string
   children: ExplanationNode[]
   [key: string]: unknown
 }
-export type ExplanationText = { text: string; [key: string]: unknown }
-export type ExplanationNode = ExplanationElement | ExplanationText
+type ExplanationText = { text: string; [key: string]: unknown }
+type ExplanationNode = ExplanationElement | ExplanationText
 
 declare module 'slate' {
   interface CustomTypes {
