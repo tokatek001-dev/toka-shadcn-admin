@@ -118,4 +118,23 @@ describe('blocks', () => {
       },
     ])
   })
+
+  it('toggleList is a no-op when selection spans a top-level p and a borderShading > p', () => {
+    // Fixture: no lists, so the unwraps do nothing and "unchanged" is correct.
+    const fixture: Descendant[] = [
+      { type: 'p', children: [{ text: 'outside' }] },
+      {
+        type: 'borderShading',
+        children: [{ type: 'p', children: [{ text: 'inside' }] }],
+      },
+    ]
+    const editor = makeEditor(JSON.parse(JSON.stringify(fixture)) as Descendant[])
+    // Select from start of [0] text to start of [1,0] text — spans two different parents.
+    Transforms.select(editor, {
+      anchor: { path: [0, 0], offset: 0 },
+      focus: { path: [1, 0, 0], offset: 0 },
+    })
+    toggleList(editor, 'ul')
+    expect(editor.children).toEqual(fixture)
+  })
 })
