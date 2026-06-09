@@ -21,7 +21,6 @@ import {
   type PartTestFormValues,
 } from '../../data/detail-schema'
 import { formatDuration } from '../../data/format'
-import { type MediaObject } from '../../data/schema'
 import {
   MAX_OPTIONS,
   MIN_OPTIONS,
@@ -29,10 +28,11 @@ import {
   newQuestion,
   plateToText,
 } from '../../data/question-groups'
+import { type MediaObject } from '../../data/schema'
 import { TextField, TextareaField } from './detail-fields'
 import { EntryMediaSection } from './entry-media-section'
 
-export type PartForm = UseFormReturn<
+type PartForm = UseFormReturn<
   PartTestFormInput,
   unknown,
   PartTestFormValues

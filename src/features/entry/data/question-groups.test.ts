@@ -32,11 +32,17 @@ describe('normalizeQuestionGroups', () => {
 
     expect(totalQuestions).toBe(3)
     expect(groups[0]).toMatchObject({
-      order: 0, number_of_question: 2, start_part_order: 1, end_part_order: 2,
+      order: 0,
+      number_of_question: 2,
+      start_part_order: 1,
+      end_part_order: 2,
       extra: 'keep',
     })
     expect(groups[1]).toMatchObject({
-      order: 1, number_of_question: 1, start_part_order: 3, end_part_order: 3,
+      order: 1,
+      number_of_question: 1,
+      start_part_order: 3,
+      end_part_order: 3,
     })
     const g = groups as Array<{ questions: Array<{ order_in_part: number }> }>
     expect(g[0].questions.map((x) => x.order_in_part)).toEqual([1, 2])
@@ -53,12 +59,18 @@ describe('normalizeQuestionGroups', () => {
         start_time_in_milliseconds: number
       }>
     }>
-    expect(g[0].questions[0].options.map((o) => o.option_id)).toEqual(['A', 'B'])
+    expect(g[0].questions[0].options.map((o) => o.option_id)).toEqual([
+      'A',
+      'B',
+    ])
     expect(g[0].questions[0].start_time_in_milliseconds).toBe(5)
   })
 
   it('handles empty input', () => {
-    expect(normalizeQuestionGroups([])).toEqual({ groups: [], totalQuestions: 0 })
+    expect(normalizeQuestionGroups([])).toEqual({
+      groups: [],
+      totalQuestions: 0,
+    })
   })
 })
 
@@ -91,7 +103,10 @@ describe('templates', () => {
 describe('plateToText', () => {
   it('extracts text from serialized Plate JSON', () => {
     const raw = JSON.stringify([
-      { type: 'p', children: [{ text: 'Hello ' }, { text: 'world', bold: true }] },
+      {
+        type: 'p',
+        children: [{ text: 'Hello ' }, { text: 'world', bold: true }],
+      },
       { type: 'p', children: [{ text: 'Line 2' }] },
     ])
     expect(plateToText(raw)).toBe('Hello world\nLine 2')

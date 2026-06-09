@@ -6,7 +6,7 @@ const env = import.meta.env as Record<string, string | undefined>
 /** Backend caps uploads at 100 MB (r2_max_upload_size). */
 export const MAX_UPLOAD_BYTES = 104_857_600
 
-export type UploadedFile = {
+type UploadedFile = {
   path: string
   size: number
   contentType: string

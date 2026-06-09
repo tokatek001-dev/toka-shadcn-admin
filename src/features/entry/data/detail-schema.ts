@@ -80,7 +80,7 @@ export type FullTestDetail = z.infer<typeof fullTestDetailSchema>
 
 const mediaField = z.custom<MediaObject>().nullable().optional()
 
-export const editableOptionSchema = z.looseObject({
+const editableOptionSchema = z.looseObject({
   text: z.string(),
   option_id: z.string(),
   is_correct: z.boolean(),
@@ -90,7 +90,9 @@ export const editableQuestionSchema = z
   .looseObject({
     question_key: z.string(),
     question_text: z.string().trim().min(1, 'Question text is required'),
-    options: z.array(editableOptionSchema).min(2, 'At least 2 options required'),
+    options: z
+      .array(editableOptionSchema)
+      .min(2, 'At least 2 options required'),
     image: mediaField,
   })
   .refine((q) => q.options.filter((o) => o.is_correct).length === 1, {
@@ -108,7 +110,9 @@ export const editableQuestionGroupSchema = z.looseObject({
     })
     .nullable(),
   image: mediaField,
-  questions: z.array(editableQuestionSchema).min(1, 'Group cần ít nhất 1 câu hỏi'),
+  questions: z
+    .array(editableQuestionSchema)
+    .min(1, 'Group cần ít nhất 1 câu hỏi'),
 })
 export type EditableQuestionGroup = z.infer<typeof editableQuestionGroupSchema>
 
@@ -209,22 +213,22 @@ export function toPartTestDefaults(row: PartTestDetail): PartTestFormInput {
                 }
               : { title: '', body: '' },
             image: (group.image as MediaObject) ?? null,
-            questions: ((group.questions as Array<Record<string, unknown>>) ?? []).map(
-              (q) => ({
-                ...q,
-                question_key: String(q.question_key ?? crypto.randomUUID()),
-                question_text: String(q.question_text ?? ''),
-                options: ((q.options as Array<Record<string, unknown>>) ?? []).map(
-                  (o) => ({
-                    ...o,
-                    text: String(o.text ?? ''),
-                    option_id: String(o.option_id ?? ''),
-                    is_correct: Boolean(o.is_correct),
-                  })
-                ),
-                image: (q.image as MediaObject) ?? null,
-              })
-            ),
+            questions: (
+              (group.questions as Array<Record<string, unknown>>) ?? []
+            ).map((q) => ({
+              ...q,
+              question_key: String(q.question_key ?? crypto.randomUUID()),
+              question_text: String(q.question_text ?? ''),
+              options: (
+                (q.options as Array<Record<string, unknown>>) ?? []
+              ).map((o) => ({
+                ...o,
+                text: String(o.text ?? ''),
+                option_id: String(o.option_id ?? ''),
+                is_correct: Boolean(o.is_correct),
+              })),
+              image: (q.image as MediaObject) ?? null,
+            })),
           }
         })
       : null,

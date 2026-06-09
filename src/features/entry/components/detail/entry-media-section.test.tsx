@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
+import { EntryMediaSection } from './entry-media-section'
 
 const uploadMediaMock = vi.fn()
 vi.mock('../../data/upload', async (importOriginal) => {
@@ -10,8 +11,6 @@ vi.mock('../../data/upload', async (importOriginal) => {
     uploadMedia: (...args: unknown[]) => uploadMediaMock(...args),
   }
 })
-
-import { EntryMediaSection } from './entry-media-section'
 
 afterEach(() => {
   vi.unstubAllEnvs()

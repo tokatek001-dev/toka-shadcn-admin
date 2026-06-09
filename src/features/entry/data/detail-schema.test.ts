@@ -172,9 +172,7 @@ describe('media + question_groups in the part form', () => {
     const values = partTestFormSchema.parse(toPartTestDefaults(row))
     const payload = toPartTestPayload(values)
     expect(payload.total_question).toBe(30)
-    expect(
-      (payload as Record<string, unknown>).question_groups
-    ).toBeUndefined()
+    expect((payload as Record<string, unknown>).question_groups).toBeUndefined()
   })
 })
 

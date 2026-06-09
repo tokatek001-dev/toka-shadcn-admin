@@ -17,7 +17,7 @@ import {
   uploadMedia,
 } from '../../data/upload'
 
-export type MediaItem = {
+type MediaItem = {
   label: string
   media: MediaObject | undefined
   kind: 'image' | 'file'
